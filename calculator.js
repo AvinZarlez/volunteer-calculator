@@ -102,6 +102,28 @@ function initializeEventListeners() {
     document.getElementById('addBagBtn').addEventListener('click', addBagEntry);
     document.getElementById('resetBtn').addEventListener('click', resetForm);
     document.getElementById('copyBtn').addEventListener('click', copyResultsToClipboard);
+    
+    // Setup bag type listeners for initial bag (index 0)
+    setupBagTypeListeners(0);
+}
+
+// Setup bag type radio button listeners
+function setupBagTypeListeners(bagIndex) {
+    const radios = document.querySelectorAll(`input[name="bagType${bagIndex}"]`);
+    const otherInput = document.getElementById(`bagTypeOther${bagIndex}`);
+    
+    if (!otherInput) return;
+    
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'Other') {
+                otherInput.style.display = 'block';
+            } else {
+                otherInput.style.display = 'none';
+                otherInput.value = '';
+            }
+        });
+    });
 }
 
 // Add a new bag entry
@@ -121,11 +143,33 @@ function addBagEntry() {
                 <label for="bagWeight${bagCounter}">Pounds per Bag:</label>
                 <input type="number" class="bag-weight" id="bagWeight${bagCounter}" min="0.01" step="0.01" required>
             </div>
+            <div class="form-group bag-type-group">
+                <label>Bag Type:</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="bagType${bagCounter}" value="Dog" class="bag-type-radio" checked>
+                        <span>Dog</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="bagType${bagCounter}" value="Cat" class="bag-type-radio">
+                        <span>Cat</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="bagType${bagCounter}" value="Other" class="bag-type-radio">
+                        <span>Other</span>
+                    </label>
+                </div>
+                <input type="text" class="bag-type-other" id="bagTypeOther${bagCounter}" placeholder="Specify type (e.g., Bird)" style="display: none;">
+            </div>
         </div>
         <button type="button" class="remove-bag-btn" onclick="removeBagEntry(${bagCounter})">×</button>
     `;
     
     bagsList.appendChild(newBagEntry);
+    
+    // Add event listeners for the new bag type radio buttons
+    setupBagTypeListeners(bagCounter);
+    
     bagCounter++;
 }
 
@@ -208,15 +252,25 @@ function getBagData() {
         const index = entry.getAttribute('data-bag-index');
         const countInput = document.getElementById(`bagCount${index}`);
         const weightInput = document.getElementById(`bagWeight${index}`);
+        const typeRadios = document.querySelectorAll(`input[name="bagType${index}"]:checked`);
+        const otherInput = document.getElementById(`bagTypeOther${index}`);
         
-        if (countInput && weightInput) {
+        if (countInput && weightInput && typeRadios.length > 0) {
             const count = parseFloat(countInput.value);
             const weight = parseFloat(weightInput.value);
+            let bagType = typeRadios[0].value;
+            
+            // If "Other" is selected, use custom value or default to "Other"
+            if (bagType === 'Other') {
+                const customType = otherInput ? otherInput.value.trim() : '';
+                bagType = customType || 'Other';
+            }
             
             if (!isNaN(count) && !isNaN(weight) && count > 0 && weight > 0) {
                 bags.push({
                     count: count,
-                    weight: weight
+                    weight: weight,
+                    type: bagType
                 });
             }
         }
@@ -244,6 +298,7 @@ function calculateResults(groupName, numVolunteers, durationHours, bags) {
             bagType: index + 1,
             count: bag.count,
             weight: bag.weight,
+            type: bag.type || 'Dog', // Default to Dog if not specified
             total: totalForBagType
         });
         results.totalPounds += totalForBagType;
@@ -274,7 +329,7 @@ function displayResults(results) {
     results.bagResults.forEach((bag) => {
         html += `
             <div class="result-item">
-                <span class="result-label">Bag Type ${bag.bagType} (${bag.count} bags × ${bag.weight} lbs):</span>
+                <span class="result-label">${bag.type} - Bag Type ${bag.bagType} (${bag.count} bags × ${bag.weight} lbs):</span>
                 <span class="result-value">${bag.total.toFixed(2)} lbs</span>
             </div>
         `;
@@ -350,11 +405,11 @@ function generateMarkdownTable(results) {
     markdown += `| Time Volunteered | ${results.durationHours.toFixed(2)} hours |\n\n`;
     
     markdown += `## Bags Processed\n\n`;
-    markdown += `| Bag Type | Number of Bags | Pounds per Bag | Total Pounds |\n`;
-    markdown += `|----------|----------------|----------------|-------------|\n`;
+    markdown += `| Animal Type | Bag Number | Number of Bags | Pounds per Bag | Total Pounds |\n`;
+    markdown += `|-------------|------------|----------------|----------------|-------------|\n`;
     
     results.bagResults.forEach((bag) => {
-        markdown += `| Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${bag.total.toFixed(2)} lbs |\n`;
+        markdown += `| ${bag.type} | Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${bag.total.toFixed(2)} lbs |\n`;
     });
     
     markdown += `\n## Summary Results\n\n`;
@@ -565,7 +620,7 @@ function displayGroupEntries(groupName, entries) {
     const actionsDiv = document.getElementById('dataViewerActions');
     
     if (entries.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8" class="no-data">No entries found for this group</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="9" class="no-data">No entries found for this group</td></tr>';
         actionsDiv.style.display = 'none';
         return;
     }
@@ -577,11 +632,20 @@ function displayGroupEntries(groupName, entries) {
         const date = new Date(entry.timestamp);
         const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
         
+        // Format bag types
+        let bagTypesStr = '';
+        if (entry.bagResults && entry.bagResults.length > 0) {
+            bagTypesStr = entry.bagResults.map(bag => `${bag.type || 'Dog'} (${bag.count})`).join(', ');
+        } else {
+            bagTypesStr = 'N/A';
+        }
+        
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>${formattedDate}</td>
             <td>${entry.numVolunteers}</td>
             <td>${entry.durationHours.toFixed(2)}</td>
+            <td>${bagTypesStr}</td>
             <td>${entry.totalPounds.toFixed(2)}</td>
             <td>${entry.poundsPerVolunteer.toFixed(2)}</td>
             <td>${entry.poundsPerVolunteerPerHour.toFixed(2)}</td>
@@ -665,21 +729,37 @@ function generateEntryTSV(entry) {
     const date = new Date(entry.timestamp);
     const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
     
-    let tsv = 'Date\tVolunteers\tHours\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
-    tsv += `${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}`;
+    // Format bag types
+    let bagTypesStr = '';
+    if (entry.bagResults && entry.bagResults.length > 0) {
+        bagTypesStr = entry.bagResults.map(bag => `${bag.type || 'Dog'} (${bag.count})`).join(', ');
+    } else {
+        bagTypesStr = 'N/A';
+    }
+    
+    let tsv = 'Date\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+    tsv += `${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${bagTypesStr}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}`;
     
     return tsv;
 }
 
 // Generate TSV for all entries
 function generateAllEntriesTSV(entries) {
-    let tsv = 'Date\tVolunteers\tHours\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+    let tsv = 'Date\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
     
     entries.forEach(entry => {
         const date = new Date(entry.timestamp);
         const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
         
-        tsv += `${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}\n`;
+        // Format bag types
+        let bagTypesStr = '';
+        if (entry.bagResults && entry.bagResults.length > 0) {
+            bagTypesStr = entry.bagResults.map(bag => `${bag.type || 'Dog'} (${bag.count})`).join(', ');
+        } else {
+            bagTypesStr = 'N/A';
+        }
+        
+        tsv += `${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${bagTypesStr}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}\n`;
     });
     
     return tsv;

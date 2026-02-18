@@ -60,6 +60,24 @@
                                         <label for="bagWeight0">Pounds per Bag:</label>
                                         <input type="number" class="bag-weight" id="bagWeight0" min="0.01" step="0.01" required>
                                     </div>
+                                    <div class="form-group bag-type-group">
+                                        <label>Bag Type:</label>
+                                        <div class="radio-group">
+                                            <label class="radio-label">
+                                                <input type="radio" name="bagType0" value="Dog" class="bag-type-radio" checked>
+                                                <span>Dog</span>
+                                            </label>
+                                            <label class="radio-label">
+                                                <input type="radio" name="bagType0" value="Cat" class="bag-type-radio">
+                                                <span>Cat</span>
+                                            </label>
+                                            <label class="radio-label">
+                                                <input type="radio" name="bagType0" value="Other" class="bag-type-radio">
+                                                <span>Other</span>
+                                            </label>
+                                        </div>
+                                        <input type="text" class="bag-type-other" id="bagTypeOther0" placeholder="Specify type (e.g., Bird)" style="display: none;">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -108,6 +126,7 @@
                                     <th>Date & Time</th>
                                     <th>Volunteers</th>
                                     <th>Hours</th>
+                                    <th>Bag Types</th>
                                     <th>Total Pounds</th>
                                     <th>Pounds/Volunteer</th>
                                     <th>Pounds/Vol/Hour</th>
@@ -116,7 +135,7 @@
                             </thead>
                             <tbody id="dataTableBody">
                                 <tr>
-                                    <td colspan="8" class="no-data">Select a volunteer group to view entries</td>
+                                    <td colspan="9" class="no-data">Select a volunteer group to view entries</td>
                                 </tr>
                             </tbody>
                         </table>
