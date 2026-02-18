@@ -4,6 +4,9 @@
 let bagCounter = 1;
 let currentView = 'calculator'; // 'calculator' or 'dataViewer' // eslint-disable-line no-unused-vars
 
+// Constants
+const DEFAULT_BAG_TYPE = 'Dog';
+
 // Local Storage Module
 const StorageModule = {
     // Save a calculation result
@@ -298,7 +301,7 @@ function calculateResults(groupName, numVolunteers, durationHours, bags) {
             bagType: index + 1,
             count: bag.count,
             weight: bag.weight,
-            type: bag.type || 'Dog', // Default to Dog if not specified
+            type: bag.type || DEFAULT_BAG_TYPE,
             total: totalForBagType
         });
         results.totalPounds += totalForBagType;
@@ -358,8 +361,13 @@ function displayResults(results) {
     resultsContent.innerHTML = html;
     document.getElementById('resultsSection').style.display = 'block';
     
+    // Remove existing listener if any to prevent duplicates
+    const saveBtn = document.getElementById('saveDataBtn');
+    const newSaveBtn = saveBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+    
     // Attach save button event listener
-    document.getElementById('saveDataBtn').addEventListener('click', saveCalculationData);
+    newSaveBtn.addEventListener('click', saveCalculationData);
 }
 
 // Save calculation data to localStorage
@@ -635,7 +643,7 @@ function displayGroupEntries(groupName, entries) {
         // Format bag types
         let bagTypesStr = '';
         if (entry.bagResults && entry.bagResults.length > 0) {
-            bagTypesStr = entry.bagResults.map(bag => `${bag.type || 'Dog'} (${bag.count})`).join(', ');
+            bagTypesStr = entry.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
         } else {
             bagTypesStr = 'N/A';
         }
@@ -732,7 +740,7 @@ function generateEntryTSV(entry) {
     // Format bag types
     let bagTypesStr = '';
     if (entry.bagResults && entry.bagResults.length > 0) {
-        bagTypesStr = entry.bagResults.map(bag => `${bag.type || 'Dog'} (${bag.count})`).join(', ');
+        bagTypesStr = entry.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
     } else {
         bagTypesStr = 'N/A';
     }
@@ -754,7 +762,7 @@ function generateAllEntriesTSV(entries) {
         // Format bag types
         let bagTypesStr = '';
         if (entry.bagResults && entry.bagResults.length > 0) {
-            bagTypesStr = entry.bagResults.map(bag => `${bag.type || 'Dog'} (${bag.count})`).join(', ');
+            bagTypesStr = entry.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
         } else {
             bagTypesStr = 'N/A';
         }
