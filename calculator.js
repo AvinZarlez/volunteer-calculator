@@ -257,19 +257,16 @@ function calculateResults(groupName, numVolunteers, durationHours, bags) {
 }
 
 // Display results
-function displayResults(results, saved) {
+function displayResults(results) {
     const resultsContent = document.getElementById('resultsContent');
     
     let html = '';
     
-    // Show save status if provided
-    if (saved !== undefined) {
-        if (saved) {
-            html += '<div class="save-feedback success">✓ Results saved to local storage</div>';
-        } else {
-            html += '<div class="save-feedback error">⚠ Failed to save results</div>';
-        }
-    }
+    // Show save banner at the top
+    html += '<div class="save-banner">';
+    html += '<button type="button" id="saveDataBtn" class="btn-save">💾 Save Data</button>';
+    html += '<div id="saveFeedback" class="save-feedback" style="display: none;"></div>';
+    html += '</div>';
     
     html += '<div class="result-group">';
     html += '<h3>Pounds Processed by Bag Type</h3>';
@@ -305,6 +302,41 @@ function displayResults(results, saved) {
     
     resultsContent.innerHTML = html;
     document.getElementById('resultsSection').style.display = 'block';
+    
+    // Attach save button event listener
+    document.getElementById('saveDataBtn').addEventListener('click', saveCalculationData);
+}
+
+// Save calculation data to localStorage
+function saveCalculationData() {
+    if (!window.calculationResults) {
+        showSaveFeedback('No calculation data to save', false);
+        return;
+    }
+    
+    const saved = StorageModule.save(window.calculationResults);
+    
+    if (saved) {
+        showSaveFeedback('✓ Data saved successfully!', true);
+        // Disable the save button after successful save
+        const saveBtn = document.getElementById('saveDataBtn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = '✓ Saved';
+    } else {
+        showSaveFeedback('⚠ Failed to save data', false);
+    }
+}
+
+// Show save feedback message
+function showSaveFeedback(message, success) {
+    const feedback = document.getElementById('saveFeedback');
+    feedback.textContent = message;
+    feedback.className = `save-feedback ${success ? 'success' : 'error'}`;
+    feedback.style.display = 'block';
+    
+    setTimeout(() => {
+        feedback.style.display = 'none';
+    }, 3000);
 }
 
 // Generate markdown table
@@ -363,14 +395,11 @@ function handleCalculate(event) {
     // Calculate results
     const results = calculateResults(groupName, numVolunteers, durationHours, bags);
     
-    // Store results for clipboard
+    // Store results for clipboard and saving
     window.calculationResults = results;
     
-    // Save to localStorage
-    const saved = StorageModule.save(results);
-    
-    // Display results
-    displayResults(results, saved);
+    // Display results (without auto-save)
+    displayResults(results);
     
     // Scroll to results
     document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });

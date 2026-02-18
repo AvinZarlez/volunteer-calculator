@@ -467,6 +467,35 @@ footer a:hover {
     border: 1px solid #f5c6cb;
 }
 
+/* Save Banner Styles */
+.save-banner {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.btn-save {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-save:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+.btn-save:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 /* Responsive design */
 @media (max-width: 600px) {
     header h1 {
