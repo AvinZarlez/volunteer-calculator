@@ -3,6 +3,7 @@
 A simple, intuitive web application for calculating volunteer pet food packing effort and productivity metrics.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://avinzarlez.github.io/volunteer-calculator/)
+[![CI/CD Pipeline](https://github.com/AvinZarlez/volunteer-calculator/actions/workflows/ci.yml/badge.svg)](https://github.com/AvinZarlez/volunteer-calculator/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/AvinZarlez/volunteer-calculator/actions/workflows/deploy.yml/badge.svg)](https://github.com/AvinZarlez/volunteer-calculator/actions/workflows/deploy.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -120,13 +121,18 @@ All tests and linting run automatically via GitHub Actions on every push and pul
 - Data integrity (3 tests)
 - Input validation (6 tests)
 
-**Status:** [![CI/CD Pipeline](https://github.com/AvinZarlez/volunteer-calculator/actions/workflows/ci.yml/badge.svg)](https://github.com/AvinZarlez/volunteer-calculator/actions/workflows/ci.yml)
-
 ## 📚 Documentation
 
 - **User Guide**: This README
-- **Technical Documentation**: See [docs/README.md](docs/README.md) for detailed technical information
-- **GitHub Pages Setup**: See [docs/GITHUB_PAGES_SETUP.md](docs/GITHUB_PAGES_SETUP.md) for deployment instructions
+- **Technical Documentation Hub**: See [docs/index.md](docs/index.md) for comprehensive technical documentation
+  - [Architecture & File Structure](docs/architecture.md)
+  - [Core Components](docs/components.md)
+  - [Calculation Algorithms](docs/calculations.md)
+  - [Testing Strategy](docs/testing.md)
+  - [GitHub Pages Setup](docs/GITHUB_PAGES_SETUP.md)
+  - [Browser Compatibility](docs/browser-compatibility.md)
+  - [Customization Guide](docs/customization.md)
+  - [Future Enhancements](docs/future-enhancements.md)
 - **Agent Instructions**: See [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md) for AI agent guidance
 
 ## 🛠️ Technology Stack
