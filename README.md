@@ -92,19 +92,34 @@ Click **"📋 Copy Results as Markdown Table"** to copy a formatted table to you
 
 ## 🧪 Testing
 
-The project includes comprehensive unit tests. To run them:
+The project includes comprehensive unit tests with 31 test cases covering all functionality.
 
-1. Open `test.html` in your web browser
-2. All tests will run automatically
-3. View detailed results for each test suite
+### Running Tests Locally
 
-Or run tests locally:
 ```bash
-# Open test.html in browser
-open test.html  # macOS
-xdg-open test.html  # Linux
-start test.html  # Windows
+# Install dependencies (first time only)
+npm install
+
+# Run all tests
+npm test
+
+# Run linting
+npm run lint
 ```
+
+### Continuous Integration
+
+All tests and linting run automatically via GitHub Actions on every push and pull request. The CI pipeline ensures code quality and test coverage before merging.
+
+**Test Coverage:**
+- Time conversion (6 tests)
+- Calculations (6 tests)
+- Markdown generation (5 tests)
+- Edge cases (5 tests)
+- Data integrity (3 tests)
+- Input validation (6 tests)
+
+**Status:** [![CI/CD Pipeline](https://github.com/AvinZarlez/volunteer-calculator/actions/workflows/ci.yml/badge.svg)](https://github.com/AvinZarlez/volunteer-calculator/actions/workflows/ci.yml)
 
 ## 📚 Documentation
 
@@ -118,6 +133,9 @@ start test.html  # Windows
 - **CSS3**: Styling with modern features (Grid, Flexbox, animations)
 - **Vanilla JavaScript**: No frameworks, pure JS for maximum compatibility
 - **GitHub Pages**: Free hosting with automatic deployment
+- **GitHub Actions**: CI/CD pipeline for automated testing and linting
+- **ESLint**: Code quality and style checking
+- **Node.js**: Test execution environment
 
 ## 🤝 Contributing
 
@@ -126,10 +144,17 @@ Contributions are welcome! Here's how you can help:
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run tests to ensure everything works
+4. Run tests and linting locally:
+   ```bash
+   npm install    # Install dependencies
+   npm run lint   # Check code quality
+   npm test       # Run all tests
+   ```
 5. Commit your changes (`git commit -m 'Add amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
+
+**Note:** All pull requests must pass the automated CI checks (linting and tests) before they can be merged.
 
 ## 📄 License
 
