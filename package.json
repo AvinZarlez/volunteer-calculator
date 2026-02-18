@@ -1,0 +1,29 @@
+{
+  "name": "volunteer-calculator",
+  "version": "1.0.0",
+  "description": "A simple webapp for calculating volunteer pet food packing effort",
+  "main": "calculator.js",
+  "scripts": {
+    "test": "node tests.node.js",
+    "lint": "eslint *.js",
+    "lint:fix": "eslint *.js --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AvinZarlez/volunteer-calculator.git"
+  },
+  "keywords": [
+    "volunteer",
+    "calculator",
+    "pet-food"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AvinZarlez/volunteer-calculator/issues"
+  },
+  "homepage": "https://github.com/AvinZarlez/volunteer-calculator#readme",
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  }
+}

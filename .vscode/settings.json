@@ -1,0 +1,19 @@
+{
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.DS_Store": true
+    },
+    "liveServer.settings.port": 8000,
+    "liveServer.settings.root": "/",
+    "html.format.indentInnerHtml": true,
+    "html.format.wrapLineLength": 120,
+    "css.lint.unknownAtRules": "ignore",
+    "javascript.preferences.quoteStyle": "single",
+    "files.associations": {
+        "*.html": "html",
+        "*.css": "css",
+        "*.js": "javascript"
+    }
+}
