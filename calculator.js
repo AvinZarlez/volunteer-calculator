@@ -215,6 +215,13 @@ function addGroupEntry() {
 // Remove a group entry
 // eslint-disable-next-line no-unused-vars
 function removeGroupEntry(index) {
+    // Prevent removing the last group
+    const groupEntries = document.querySelectorAll('.group-entry');
+    if (groupEntries.length <= 1) {
+        alert('At least one volunteer group is required.');
+        return;
+    }
+    
     const groupEntry = document.querySelector(`[data-group-index="${index}"]`);
     if (groupEntry) {
         groupEntry.remove();
@@ -356,7 +363,7 @@ function calculateMultipleGroupResults(groups, durationHours, bags) {
         totalPoundsPerVolunteerPerHour: 0
     };
     
-    // Calculate pounds per bag type
+    // Calculate pounds per bag type (shared across all groups)
     bags.forEach((bag, index) => {
         const totalForBagType = bag.count * bag.weight;
         results.bagResults.push({
@@ -371,6 +378,11 @@ function calculateMultipleGroupResults(groups, durationHours, bags) {
     
     // Calculate per group metrics
     groups.forEach((group) => {
+        // Guard against division by zero
+        if (group.volunteers <= 0) {
+            return; // Skip invalid groups
+        }
+        
         const poundsPerVolunteer = results.totalPounds / group.volunteers;
         const poundsPerVolunteerPerHour = poundsPerVolunteer / durationHours;
         
@@ -378,8 +390,8 @@ function calculateMultipleGroupResults(groups, durationHours, bags) {
             groupName: group.name,
             numVolunteers: group.volunteers,
             durationHours: durationHours,
-            bagResults: results.bagResults,
-            totalPounds: results.totalPounds,
+            bagResults: [...results.bagResults], // Clone bag results for each group
+            totalPounds: results.totalPounds, // Each group processed all bags
             poundsPerVolunteer: poundsPerVolunteer,
             poundsPerVolunteerPerHour: poundsPerVolunteerPerHour
         });
@@ -387,9 +399,11 @@ function calculateMultipleGroupResults(groups, durationHours, bags) {
         results.totalVolunteers += group.volunteers;
     });
     
-    // Calculate overall totals
-    results.totalPoundsPerVolunteer = results.totalPounds / results.totalVolunteers;
-    results.totalPoundsPerVolunteerPerHour = results.totalPoundsPerVolunteer / durationHours;
+    // Calculate overall totals - guard against division by zero
+    if (results.totalVolunteers > 0) {
+        results.totalPoundsPerVolunteer = results.totalPounds / results.totalVolunteers;
+        results.totalPoundsPerVolunteerPerHour = results.totalPoundsPerVolunteer / durationHours;
+    }
     
     return results;
 }
@@ -453,7 +467,7 @@ function displayResults(results) {
     html += '</div>';
     
     // Check if this is a multiple group result
-    if (results.groupResults && results.groupResults.length > 1) {
+    if (results.groupResults && results.groupResults.length >= 1) {
         // Display per-group statistics
         results.groupResults.forEach((groupResult, index) => {
             html += '<div class="result-group">';
@@ -475,28 +489,30 @@ function displayResults(results) {
             html += '</div>';
         });
         
-        // Display combined totals
-        html += '<div class="result-group total-results">';
-        html += '<h3>Combined Total</h3>';
-        html += `
-            <div class="result-item">
-                <span class="result-label">Total Pet Food Processed:</span>
-                <span class="result-value">${results.totalPounds.toFixed(2)} lbs</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Total Volunteers (All Groups):</span>
-                <span class="result-value">${results.totalVolunteers}</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Average per Volunteer (All Groups):</span>
-                <span class="result-value">${results.totalPoundsPerVolunteer.toFixed(2)} lbs</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Average per Volunteer per Hour (All Groups):</span>
-                <span class="result-value">${results.totalPoundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
-            </div>
-        `;
-        html += '</div>';
+        // Display combined totals only if multiple groups
+        if (results.groupResults.length > 1) {
+            html += '<div class="result-group total-results">';
+            html += '<h3>Combined Total</h3>';
+            html += `
+                <div class="result-item">
+                    <span class="result-label">Total Pet Food Processed:</span>
+                    <span class="result-value">${results.totalPounds.toFixed(2)} lbs</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Total Volunteers (All Groups):</span>
+                    <span class="result-value">${results.totalVolunteers}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Average per Volunteer (All Groups):</span>
+                    <span class="result-value">${results.totalPoundsPerVolunteer.toFixed(2)} lbs</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Average per Volunteer per Hour (All Groups):</span>
+                    <span class="result-value">${results.totalPoundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
+                </div>
+            `;
+            html += '</div>';
+        }
     } else {
         // Single group - display as before
         html += '<div class="result-group">';
