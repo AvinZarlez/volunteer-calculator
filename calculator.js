@@ -12,7 +12,7 @@ const StorageModule = {
         const entry = {
             ...result,
             timestamp: timestamp,
-            id: Date.now() + Math.random() // Unique ID for each entry
+            id: Date.now() + '-' + Math.random() // Unique ID for each entry
         };
         
         const allData = this.getAll();
@@ -536,7 +536,7 @@ function displayGroupEntries(groupName, entries) {
     const actionsDiv = document.getElementById('dataViewerActions');
     
     if (entries.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" class="no-data">No entries found for this group</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8" class="no-data">No entries found for this group</td></tr>';
         actionsDiv.style.display = 'none';
         return;
     }
