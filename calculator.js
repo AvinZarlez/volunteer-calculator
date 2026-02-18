@@ -2,6 +2,7 @@
 
 // State management
 let bagCounter = 1;
+let groupCounter = 1;
 let currentView = 'calculator'; // 'calculator' or 'dataViewer' // eslint-disable-line no-unused-vars
 
 // Constants
@@ -103,6 +104,7 @@ if (typeof document !== 'undefined') {
 function initializeEventListeners() {
     document.getElementById('volunteerForm').addEventListener('submit', handleCalculate);
     document.getElementById('addBagBtn').addEventListener('click', addBagEntry);
+    document.getElementById('addGroupBtn').addEventListener('click', addGroupEntry);
     document.getElementById('resetBtn').addEventListener('click', resetForm);
     document.getElementById('copyBtn').addEventListener('click', copyResultsToClipboard);
     
@@ -182,6 +184,40 @@ function removeBagEntry(index) {
     const bagEntry = document.querySelector(`[data-bag-index="${index}"]`);
     if (bagEntry) {
         bagEntry.remove();
+    }
+}
+
+// Add a new group entry
+function addGroupEntry() {
+    const groupsList = document.getElementById('groupsList');
+    const newGroupEntry = document.createElement('div');
+    newGroupEntry.className = 'group-entry';
+    newGroupEntry.setAttribute('data-group-index', groupCounter);
+    
+    newGroupEntry.innerHTML = `
+        <div class="group-fields">
+            <div class="form-group">
+                <label for="groupName${groupCounter}">Name of Volunteer Group:</label>
+                <input type="text" class="group-name" id="groupName${groupCounter}" required>
+            </div>
+            <div class="form-group">
+                <label for="numVolunteers${groupCounter}">Number of Volunteers:</label>
+                <input type="number" class="num-volunteers" id="numVolunteers${groupCounter}" min="1" required>
+            </div>
+        </div>
+        <button type="button" class="remove-group-btn" onclick="removeGroupEntry(${groupCounter})">×</button>
+    `;
+    
+    groupsList.appendChild(newGroupEntry);
+    groupCounter++;
+}
+
+// Remove a group entry
+// eslint-disable-next-line no-unused-vars
+function removeGroupEntry(index) {
+    const groupEntry = document.querySelector(`[data-group-index="${index}"]`);
+    if (groupEntry) {
+        groupEntry.remove();
     }
 }
 
@@ -282,7 +318,83 @@ function getBagData() {
     return bags;
 }
 
-// Calculate results
+// Get all group data from the form
+function getGroupData() {
+    const groupEntries = document.querySelectorAll('.group-entry');
+    const groups = [];
+    
+    groupEntries.forEach((entry) => {
+        const index = entry.getAttribute('data-group-index');
+        const nameInput = document.getElementById(`groupName${index}`);
+        const volunteersInput = document.getElementById(`numVolunteers${index}`);
+        
+        if (nameInput && volunteersInput) {
+            const name = nameInput.value.trim();
+            const volunteers = parseInt(volunteersInput.value);
+            
+            if (name && !isNaN(volunteers) && volunteers > 0) {
+                groups.push({
+                    name: name,
+                    volunteers: volunteers
+                });
+            }
+        }
+    });
+    
+    return groups;
+}
+
+// Calculate results for multiple groups
+function calculateMultipleGroupResults(groups, durationHours, bags) {
+    const results = {
+        durationHours: durationHours,
+        bagResults: [],
+        groupResults: [],
+        totalPounds: 0,
+        totalVolunteers: 0,
+        totalPoundsPerVolunteer: 0,
+        totalPoundsPerVolunteerPerHour: 0
+    };
+    
+    // Calculate pounds per bag type
+    bags.forEach((bag, index) => {
+        const totalForBagType = bag.count * bag.weight;
+        results.bagResults.push({
+            bagType: index + 1,
+            count: bag.count,
+            weight: bag.weight,
+            type: bag.type || DEFAULT_BAG_TYPE,
+            total: totalForBagType
+        });
+        results.totalPounds += totalForBagType;
+    });
+    
+    // Calculate per group metrics
+    groups.forEach((group) => {
+        const poundsPerVolunteer = results.totalPounds / group.volunteers;
+        const poundsPerVolunteerPerHour = poundsPerVolunteer / durationHours;
+        
+        results.groupResults.push({
+            groupName: group.name,
+            numVolunteers: group.volunteers,
+            durationHours: durationHours,
+            bagResults: results.bagResults,
+            totalPounds: results.totalPounds,
+            poundsPerVolunteer: poundsPerVolunteer,
+            poundsPerVolunteerPerHour: poundsPerVolunteerPerHour
+        });
+        
+        results.totalVolunteers += group.volunteers;
+    });
+    
+    // Calculate overall totals
+    results.totalPoundsPerVolunteer = results.totalPounds / results.totalVolunteers;
+    results.totalPoundsPerVolunteerPerHour = results.totalPoundsPerVolunteer / durationHours;
+    
+    return results;
+}
+
+// Calculate results (legacy single group)
 function calculateResults(groupName, numVolunteers, durationHours, bags) {
     const results = {
         groupName: groupName,
@@ -340,23 +452,71 @@ function displayResults(results) {
     
     html += '</div>';
     
-    html += '<div class="result-group">';
-    html += '<h3>Summary Statistics</h3>';
-    html += `
-        <div class="result-item">
-            <span class="result-label">Total Pet Food Processed:</span>
-            <span class="result-value">${results.totalPounds.toFixed(2)} lbs</span>
-        </div>
-        <div class="result-item">
-            <span class="result-label">Amount Processed per Volunteer:</span>
-            <span class="result-value">${results.poundsPerVolunteer.toFixed(2)} lbs</span>
-        </div>
-        <div class="result-item">
-            <span class="result-label">Amount Processed per Volunteer per Hour:</span>
-            <span class="result-value">${results.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
-        </div>
-    `;
-    html += '</div>';
+    // Check if this is a multiple group result
+    if (results.groupResults && results.groupResults.length > 1) {
+        // Display per-group statistics
+        results.groupResults.forEach((groupResult, index) => {
+            html += '<div class="result-group">';
+            html += `<h3>Group ${index + 1}: ${groupResult.groupName}</h3>`;
+            html += `
+                <div class="result-item">
+                    <span class="result-label">Number of Volunteers:</span>
+                    <span class="result-value">${groupResult.numVolunteers}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Amount Processed per Volunteer:</span>
+                    <span class="result-value">${groupResult.poundsPerVolunteer.toFixed(2)} lbs</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Amount Processed per Volunteer per Hour:</span>
+                    <span class="result-value">${groupResult.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
+                </div>
+            `;
+            html += '</div>';
+        });
+        
+        // Display combined totals
+        html += '<div class="result-group total-results">';
+        html += '<h3>Combined Total</h3>';
+        html += `
+            <div class="result-item">
+                <span class="result-label">Total Pet Food Processed:</span>
+                <span class="result-value">${results.totalPounds.toFixed(2)} lbs</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Total Volunteers (All Groups):</span>
+                <span class="result-value">${results.totalVolunteers}</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Average per Volunteer (All Groups):</span>
+                <span class="result-value">${results.totalPoundsPerVolunteer.toFixed(2)} lbs</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Average per Volunteer per Hour (All Groups):</span>
+                <span class="result-value">${results.totalPoundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
+            </div>
+        `;
+        html += '</div>';
+    } else {
+        // Single group - display as before
+        html += '<div class="result-group">';
+        html += '<h3>Summary Statistics</h3>';
+        html += `
+            <div class="result-item">
+                <span class="result-label">Total Pet Food Processed:</span>
+                <span class="result-value">${results.totalPounds.toFixed(2)} lbs</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Amount Processed per Volunteer:</span>
+                <span class="result-value">${results.poundsPerVolunteer.toFixed(2)} lbs</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Amount Processed per Volunteer per Hour:</span>
+                <span class="result-value">${results.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
+            </div>
+        `;
+        html += '</div>';
+    }
     
     resultsContent.innerHTML = html;
     document.getElementById('resultsSection').style.display = 'block';
@@ -377,16 +537,41 @@ function saveCalculationData() {
         return;
     }
     
-    const saved = StorageModule.save(window.calculationResults);
+    const results = window.calculationResults;
     
-    if (saved) {
-        showSaveFeedback('✓ Data saved successfully!', true);
-        // Disable the save button after successful save
-        const saveBtn = document.getElementById('saveDataBtn');
-        saveBtn.disabled = true;
-        saveBtn.textContent = '✓ Saved';
+    // Check if this is multiple groups
+    if (results.groupResults && results.groupResults.length > 0) {
+        // Save each group separately (don't save totals)
+        let allSaved = true;
+        results.groupResults.forEach(groupResult => {
+            const saved = StorageModule.save(groupResult);
+            if (!saved) {
+                allSaved = false;
+            }
+        });
+        
+        if (allSaved) {
+            showSaveFeedback(`✓ Data saved successfully for ${results.groupResults.length} group(s)!`, true);
+            // Disable the save button after successful save
+            const saveBtn = document.getElementById('saveDataBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '✓ Saved';
+        } else {
+            showSaveFeedback('⚠ Failed to save some group data', false);
+        }
     } else {
-        showSaveFeedback('⚠ Failed to save data', false);
+        // Single group - save as before
+        const saved = StorageModule.save(results);
+        
+        if (saved) {
+            showSaveFeedback('✓ Data saved successfully!', true);
+            // Disable the save button after successful save
+            const saveBtn = document.getElementById('saveDataBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '✓ Saved';
+        } else {
+            showSaveFeedback('⚠ Failed to save data', false);
+        }
     }
 }
 
@@ -435,28 +620,41 @@ function handleCalculate(event) {
     event.preventDefault();
     
     // Get input values
-    const groupName = document.getElementById('groupName').value.trim();
-    const numVolunteersInput = document.getElementById('numVolunteers').value;
+    const groups = getGroupData();
     const durationInput = document.getElementById('duration').value;
     const timeUnit = document.getElementById('timeUnit').value;
     const bags = getBagData();
     
-    const numVolunteers = parseInt(numVolunteersInput);
     const duration = parseFloat(durationInput);
     
-    // Validate inputs with detailed error messages
-    const errors = validateInputs(groupName, numVolunteers, duration, bags);
+    // Validate inputs
+    if (!duration || duration <= 0) {
+        alert('Please enter a valid time duration.');
+        return;
+    }
     
-    if (errors.length > 0) {
-        showValidationErrors(errors);
+    if (!bags || bags.length === 0) {
+        alert('Please enter at least one bag type.');
+        return;
+    }
+    
+    if (!groups || groups.length === 0) {
+        alert('Please enter at least one volunteer group.');
         return;
     }
     
     // Convert duration to hours
     const durationHours = convertToHours(duration, timeUnit);
     
-    // Calculate results
-    const results = calculateResults(groupName, numVolunteers, durationHours, bags);
+    // Calculate results based on number of groups
+    let results;
+    if (groups.length === 1) {
+        // Single group - use legacy function for compatibility
+        results = calculateResults(groups[0].name, groups[0].volunteers, durationHours, bags);
+    } else {
+        // Multiple groups - use new function
+        results = calculateMultipleGroupResults(groups, durationHours, bags);
+    }
     
     // Store results for clipboard and saving
     window.calculationResults = results;
