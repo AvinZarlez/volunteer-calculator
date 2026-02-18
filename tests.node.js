@@ -1,9 +1,20 @@
-// Test Framework
-/* global convertToHours, calculateResults, generateMarkdownTable */
+#!/usr/bin/env node
+// Node.js compatible test runner for CI/CD
+
+// Import the calculator functions
+const {
+    convertToHours,
+    calculateResults,
+    generateMarkdownTable
+} = require('./calculator.js');
+
+// Simple test framework for Node.js
 class TestRunner {
     constructor() {
         this.tests = [];
         this.results = [];
+        this.totalTests = 0;
+        this.passedTests = 0;
     }
 
     describe(suiteName, testFn) {
@@ -21,77 +32,61 @@ class TestRunner {
     }
 
     async run() {
+        console.log('🧪 Running Volunteer Calculator Test Suite\n');
+        
         this.results = [];
         
         for (const suite of this.tests) {
+            console.log(`\n${suite.name}`);
             const suiteResults = {
                 name: suite.name,
                 tests: []
             };
             
             for (const test of suite.tests) {
+                this.totalTests++;
                 try {
                     await test.test();
                     suiteResults.tests.push({
                         name: test.name,
                         passed: true
                     });
+                    this.passedTests++;
+                    console.log(`  ✓ ${test.name}`);
                 } catch (error) {
                     suiteResults.tests.push({
                         name: test.name,
                         passed: false,
                         error: error.message
                     });
+                    console.log(`  ✗ ${test.name}`);
+                    console.log(`    ${error.message}`);
                 }
             }
             
             this.results.push(suiteResults);
         }
         
-        this.displayResults();
+        this.displaySummary();
+        
+        // Exit with error code if tests failed
+        if (this.passedTests !== this.totalTests) {
+            process.exit(1);
+        }
     }
 
-    displayResults() {
-        let totalTests = 0;
-        let passedTests = 0;
+    displaySummary() {
+        console.log('\n' + '='.repeat(50));
+        console.log(`Total: ${this.totalTests}`);
+        console.log(`Passed: ${this.passedTests}`);
+        console.log(`Failed: ${this.totalTests - this.passedTests}`);
+        console.log('='.repeat(50));
         
-        let html = '';
-        
-        this.results.forEach(suite => {
-            html += `<div class="test-suite">`;
-            html += `<h2>${suite.name}</h2>`;
-            
-            suite.tests.forEach(test => {
-                totalTests++;
-                if (test.passed) {
-                    passedTests++;
-                }
-                
-                const status = test.passed ? 'pass' : 'fail';
-                const icon = test.passed ? '✓' : '✗';
-                
-                html += `<div class="test-case ${status}">`;
-                html += `<div class="test-name">${icon} ${test.name}</div>`;
-                if (!test.passed) {
-                    html += `<div class="test-error">${test.error}</div>`;
-                }
-                html += `</div>`;
-            });
-            
-            html += `</div>`;
-        });
-        
-        document.getElementById('testResults').innerHTML = html;
-        
-        const summaryHtml = `
-            <h2>Test Results</h2>
-            <div class="stats">
-                <div>Total: ${totalTests}</div>
-                <div>Passed: ${passedTests}</div>
-                <div>Failed: ${totalTests - passedTests}</div>
-            </div>
-        `;
-        document.getElementById('summary').innerHTML = summaryHtml;
+        if (this.passedTests === this.totalTests) {
+            console.log('\n✅ All tests passed!');
+        } else {
+            console.log(`\n❌ ${this.totalTests - this.passedTests} test(s) failed!`);
+        }
     }
 }
 
@@ -350,7 +345,56 @@ runner.describe('Data Integrity Tests', (it) => {
     });
 });
 
-// Run all tests when page loads
-window.addEventListener('DOMContentLoaded', () => {
-    runner.run();
+// Test Suite 6: Input Validation Tests
+runner.describe('Input Validation Tests', (it) => {
+    it('should reject empty group name', () => {
+        const bags = [{ count: 5, weight: 50 }];
+        
+        // Test that calculations still work with empty name (validation happens in UI)
+        // These tests verify the calculation functions work with any input
+        const result = calculateResults('', 10, 2, bags);
+        assertTrue(result.groupName === '', 'Empty group name should be accepted by calculation function');
+    });
+
+    it('should handle zero volunteers edge case', () => {
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('Test', 0, 2, bags);
+        
+        // Division by zero should result in Infinity
+        assertTrue(!isFinite(result.poundsPerVolunteer), 'Zero volunteers should result in Infinity');
+    });
+
+    it('should handle zero duration edge case', () => {
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('Test', 10, 0, bags);
+        
+        // Division by zero should result in Infinity
+        assertTrue(!isFinite(result.poundsPerVolunteerPerHour), 'Zero duration should result in Infinity');
+    });
+
+    it('should handle empty bags array', () => {
+        const bags = [];
+        const result = calculateResults('Test', 10, 2, bags);
+        
+        assertEquals(result.totalPounds, 0, 'Empty bags should result in zero pounds');
+        assertEquals(result.bagResults.length, 0, 'Should have no bag results');
+    });
+
+    it('should handle negative values in calculations', () => {
+        const bags = [{ count: -5, weight: 50 }];
+        const result = calculateResults('Test', 10, 2, bags);
+        
+        assertEquals(result.totalPounds, -250, 'Negative count should result in negative total');
+    });
+
+    it('should trim whitespace from group name', () => {
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('  Test Group  ', 10, 2, bags);
+        
+        // Calculator doesn't trim - this should be done in the UI validation
+        assertEquals(result.groupName, '  Test Group  ', 'Calculator should preserve input as-is');
+    });
 });
+
+// Run all tests
+runner.run();

@@ -3,10 +3,12 @@
 // State management
 let bagCounter = 1;
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    initializeEventListeners();
-});
+// Initialize on page load (only in browser)
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeEventListeners();
+    });
+}
 
 // Event Listeners
 function initializeEventListeners() {
@@ -42,11 +44,65 @@ function addBagEntry() {
 }
 
 // Remove a bag entry
+// eslint-disable-next-line no-unused-vars
 function removeBagEntry(index) {
     const bagEntry = document.querySelector(`[data-bag-index="${index}"]`);
     if (bagEntry) {
         bagEntry.remove();
     }
+}
+
+// Validate form inputs with detailed error messages
+function validateInputs(groupName, numVolunteers, duration, bags) {
+    const errors = [];
+    
+    // Validate group name
+    if (!groupName || groupName.trim() === '') {
+        errors.push('Please enter a volunteer group name.');
+    }
+    
+    // Validate number of volunteers
+    if (!numVolunteers || isNaN(numVolunteers) || numVolunteers < 1) {
+        errors.push('Please enter a valid number of volunteers (at least 1).');
+    }
+    
+    // Validate duration
+    if (!duration || isNaN(duration) || duration <= 0) {
+        errors.push('Please enter a valid time duration (greater than 0).');
+    }
+    
+    // Validate bags
+    if (!bags || bags.length === 0) {
+        errors.push('Please enter at least one bag type with valid numbers.');
+    } else {
+        // Check each bag entry
+        const bagEntries = document.querySelectorAll('.bag-entry');
+        bagEntries.forEach((entry, index) => {
+            const bagIndex = entry.getAttribute('data-bag-index');
+            const countInput = document.getElementById(`bagCount${bagIndex}`);
+            const weightInput = document.getElementById(`bagWeight${bagIndex}`);
+            
+            if (countInput && weightInput) {
+                const count = countInput.value;
+                const weight = weightInput.value;
+                
+                if (!count || count.trim() === '') {
+                    errors.push(`Bag type ${index + 1}: Please enter the number of bags.`);
+                }
+                if (!weight || weight.trim() === '') {
+                    errors.push(`Bag type ${index + 1}: Please enter the pounds per bag.`);
+                }
+            }
+        });
+    }
+    
+    return errors;
+}
+
+// Display validation errors to user
+function showValidationErrors(errors) {
+    const errorMessage = 'Please correct the following:\n\n' + errors.map((err, idx) => `${idx + 1}. ${err}`).join('\n');
+    alert(errorMessage);
 }
 
 // Convert time to hours
@@ -187,15 +243,20 @@ function handleCalculate(event) {
     event.preventDefault();
     
     // Get input values
-    const groupName = document.getElementById('groupName').value;
-    const numVolunteers = parseInt(document.getElementById('numVolunteers').value);
-    const duration = parseFloat(document.getElementById('duration').value);
+    const groupName = document.getElementById('groupName').value.trim();
+    const numVolunteersInput = document.getElementById('numVolunteers').value;
+    const durationInput = document.getElementById('duration').value;
     const timeUnit = document.getElementById('timeUnit').value;
     const bags = getBagData();
     
-    // Validate inputs
-    if (!groupName || numVolunteers < 1 || duration <= 0 || bags.length === 0) {
-        alert('Please fill in all required fields correctly.');
+    const numVolunteers = parseInt(numVolunteersInput);
+    const duration = parseFloat(durationInput);
+    
+    // Validate inputs with detailed error messages
+    const errors = validateInputs(groupName, numVolunteers, duration, bags);
+    
+    if (errors.length > 0) {
+        showValidationErrors(errors);
         return;
     }
     
