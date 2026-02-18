@@ -557,8 +557,8 @@ function displayGroupEntries(groupName, entries) {
             <td>${entry.poundsPerVolunteer.toFixed(2)}</td>
             <td>${entry.poundsPerVolunteerPerHour.toFixed(2)}</td>
             <td class="action-buttons">
-                <button class="btn-small btn-copy" onclick="copyEntryToClipboard('${groupName}', ${entry.id})">📋 Copy</button>
-                <button class="btn-small btn-delete" onclick="confirmDeleteEntry('${groupName}', ${entry.id})">🗑️ Delete</button>
+                <button class="btn-small btn-copy" onclick="copyEntryToClipboard('${groupName}', '${entry.id}')">📋 Copy</button>
+                <button class="btn-small btn-delete" onclick="confirmDeleteEntry('${groupName}', '${entry.id}')">🗑️ Delete</button>
             </td>
         `;
         

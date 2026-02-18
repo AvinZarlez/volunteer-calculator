@@ -544,6 +544,55 @@ runner.describe('Storage Module Tests', (it) => {
         const groups = StorageModule.getGroupNames();
         assertEquals(groups.length, 0, 'Should have no groups after deleting last entry');
     });
+    
+    it('should successfully delete entry with string ID', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('Test Group', 10, 2, bags);
+        
+        StorageModule.save(result);
+        
+        const entriesBefore = StorageModule.getGroup('Test Group');
+        assertEquals(entriesBefore.length, 1, 'Should have 1 entry before delete');
+        
+        const entryId = entriesBefore[0].id;
+        assertTrue(typeof entryId === 'string', 'Entry ID should be a string');
+        
+        const deleted = StorageModule.deleteEntry('Test Group', entryId);
+        assertTrue(deleted, 'Delete should return true');
+        
+        const entriesAfter = StorageModule.getGroup('Test Group');
+        assertEquals(entriesAfter.length, 0, 'Should have 0 entries after delete');
+    });
+    
+    it('should delete correct entry when multiple entries exist', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result1 = calculateResults('Test Group', 10, 2, bags);
+        const result2 = calculateResults('Test Group', 15, 3, bags);
+        const result3 = calculateResults('Test Group', 20, 4, bags);
+        
+        StorageModule.save(result1);
+        StorageModule.save(result2);
+        StorageModule.save(result3);
+        
+        const entriesBefore = StorageModule.getGroup('Test Group');
+        assertEquals(entriesBefore.length, 3, 'Should have 3 entries before delete');
+        
+        const middleEntryId = entriesBefore[1].id;
+        StorageModule.deleteEntry('Test Group', middleEntryId);
+        
+        const entriesAfter = StorageModule.getGroup('Test Group');
+        assertEquals(entriesAfter.length, 2, 'Should have 2 entries after delete');
+        
+        // Verify the correct entry was deleted (middle one with 15 volunteers)
+        const remainingVolunteerCounts = entriesAfter.map(e => e.numVolunteers);
+        assertTrue(remainingVolunteerCounts.includes(10), 'First entry should remain');
+        assertTrue(remainingVolunteerCounts.includes(20), 'Third entry should remain');
+        assertTrue(!remainingVolunteerCounts.includes(15), 'Middle entry should be deleted');
+    });
 });
 
 // Run all tests
