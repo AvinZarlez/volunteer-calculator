@@ -303,7 +303,7 @@ Results → Markdown Generation → Clipboard API → Feedback Display
 
 ### Test Coverage
 
-The test suite (`tests.js`) includes 5 test suites with over 30 test cases:
+The test suite (`tests.js`) includes 5 test suites with 25 test cases:
 
 1. **Time Conversion Tests**: Verify hour/minute conversion
 2. **Calculation Tests**: Verify all calculation formulas
