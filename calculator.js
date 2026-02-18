@@ -2,11 +2,97 @@
 
 // State management
 let bagCounter = 1;
+let currentView = 'calculator'; // 'calculator' or 'dataViewer' // eslint-disable-line no-unused-vars
+
+// Local Storage Module
+const StorageModule = {
+    // Save a calculation result
+    save: function(result) {
+        const timestamp = new Date().toISOString();
+        const entry = {
+            ...result,
+            timestamp: timestamp,
+            id: Date.now() + Math.random() // Unique ID for each entry
+        };
+        
+        const allData = this.getAll();
+        const groupName = result.groupName.trim();
+        
+        if (!allData[groupName]) {
+            allData[groupName] = [];
+        }
+        
+        allData[groupName].push(entry);
+        
+        try {
+            localStorage.setItem('volunteerCalculatorData', JSON.stringify(allData));
+            return true;
+        } catch (e) {
+            console.error('Failed to save to localStorage:', e);
+            return false;
+        }
+    },
+    
+    // Get all data
+    getAll: function() {
+        try {
+            const data = localStorage.getItem('volunteerCalculatorData');
+            return data ? JSON.parse(data) : {};
+        } catch (e) {
+            console.error('Failed to read from localStorage:', e);
+            return {};
+        }
+    },
+    
+    // Get entries for a specific group
+    getGroup: function(groupName) {
+        const allData = this.getAll();
+        return allData[groupName.trim()] || [];
+    },
+    
+    // Get all group names
+    getGroupNames: function() {
+        const allData = this.getAll();
+        return Object.keys(allData).sort();
+    },
+    
+    // Delete a specific entry
+    deleteEntry: function(groupName, entryId) {
+        const allData = this.getAll();
+        const groupData = allData[groupName.trim()];
+        
+        if (!groupData) return false;
+        
+        const index = groupData.findIndex(entry => entry.id === entryId);
+        if (index === -1) return false;
+        
+        groupData.splice(index, 1);
+        
+        // Remove group if empty
+        if (groupData.length === 0) {
+            delete allData[groupName.trim()];
+        }
+        
+        try {
+            localStorage.setItem('volunteerCalculatorData', JSON.stringify(allData));
+            return true;
+        } catch (e) {
+            console.error('Failed to delete from localStorage:', e);
+            return false;
+        }
+    },
+    
+    // Clear all data (for testing)
+    clear: function() {
+        localStorage.removeItem('volunteerCalculatorData');
+    }
+};
 
 // Initialize on page load (only in browser)
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', function() {
         initializeEventListeners();
+        initializeViewSwitching();
     });
 }
 
@@ -171,10 +257,21 @@ function calculateResults(groupName, numVolunteers, durationHours, bags) {
 }
 
 // Display results
-function displayResults(results) {
+function displayResults(results, saved) {
     const resultsContent = document.getElementById('resultsContent');
     
-    let html = '<div class="result-group">';
+    let html = '';
+    
+    // Show save status if provided
+    if (saved !== undefined) {
+        if (saved) {
+            html += '<div class="save-feedback success">✓ Results saved to local storage</div>';
+        } else {
+            html += '<div class="save-feedback error">⚠ Failed to save results</div>';
+        }
+    }
+    
+    html += '<div class="result-group">';
     html += '<h3>Pounds Processed by Bag Type</h3>';
     
     results.bagResults.forEach((bag) => {
@@ -269,8 +366,11 @@ function handleCalculate(event) {
     // Store results for clipboard
     window.calculationResults = results;
     
+    // Save to localStorage
+    const saved = StorageModule.save(results);
+    
     // Display results
-    displayResults(results);
+    displayResults(results, saved);
     
     // Scroll to results
     document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
@@ -344,6 +444,251 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         convertToHours,
         calculateResults,
-        generateMarkdownTable
+        generateMarkdownTable,
+        StorageModule
     };
+}
+
+// View Switching Functions
+function initializeViewSwitching() {
+    const navCalculator = document.getElementById('navCalculator');
+    const navDataViewer = document.getElementById('navDataViewer');
+    
+    if (navCalculator) {
+        navCalculator.addEventListener('click', () => switchView('calculator'));
+    }
+    
+    if (navDataViewer) {
+        navDataViewer.addEventListener('click', () => switchView('dataViewer'));
+    }
+    
+    // Initialize data viewer components
+    const groupSelect = document.getElementById('groupSelect');
+    if (groupSelect) {
+        groupSelect.addEventListener('change', loadGroupData);
+    }
+    
+    const refreshBtn = document.getElementById('refreshGroupsBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', refreshGroupList);
+    }
+}
+
+function switchView(view) {
+    currentView = view;
+    
+    const calculatorView = document.getElementById('calculatorView');
+    const dataViewerView = document.getElementById('dataViewerView');
+    const navCalculator = document.getElementById('navCalculator');
+    const navDataViewer = document.getElementById('navDataViewer');
+    
+    if (view === 'calculator') {
+        calculatorView.style.display = 'block';
+        dataViewerView.style.display = 'none';
+        navCalculator.classList.add('active');
+        navDataViewer.classList.remove('active');
+    } else {
+        calculatorView.style.display = 'none';
+        dataViewerView.style.display = 'block';
+        navCalculator.classList.remove('active');
+        navDataViewer.classList.add('active');
+        
+        // Load data viewer
+        refreshGroupList();
+    }
+}
+
+// Data Viewer Functions
+function refreshGroupList() {
+    const groupSelect = document.getElementById('groupSelect');
+    const groups = StorageModule.getGroupNames();
+    
+    groupSelect.innerHTML = '<option value="">-- Select a volunteer group --</option>';
+    
+    groups.forEach(group => {
+        const option = document.createElement('option');
+        option.value = group;
+        option.textContent = group;
+        groupSelect.appendChild(option);
+    });
+    
+    // Clear the data table
+    document.getElementById('dataTableBody').innerHTML = '';
+    document.getElementById('dataViewerActions').style.display = 'none';
+}
+
+function loadGroupData() {
+    const groupSelect = document.getElementById('groupSelect');
+    const selectedGroup = groupSelect.value;
+    
+    if (!selectedGroup) {
+        document.getElementById('dataTableBody').innerHTML = '';
+        document.getElementById('dataViewerActions').style.display = 'none';
+        return;
+    }
+    
+    const entries = StorageModule.getGroup(selectedGroup);
+    displayGroupEntries(selectedGroup, entries);
+}
+
+function displayGroupEntries(groupName, entries) {
+    const tableBody = document.getElementById('dataTableBody');
+    const actionsDiv = document.getElementById('dataViewerActions');
+    
+    if (entries.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="no-data">No entries found for this group</td></tr>';
+        actionsDiv.style.display = 'none';
+        return;
+    }
+    
+    tableBody.innerHTML = '';
+    
+    entries.forEach((entry, index) => {
+        const row = document.createElement('tr');
+        const date = new Date(entry.timestamp);
+        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${formattedDate}</td>
+            <td>${entry.numVolunteers}</td>
+            <td>${entry.durationHours.toFixed(2)}</td>
+            <td>${entry.totalPounds.toFixed(2)}</td>
+            <td>${entry.poundsPerVolunteer.toFixed(2)}</td>
+            <td>${entry.poundsPerVolunteerPerHour.toFixed(2)}</td>
+            <td class="action-buttons">
+                <button class="btn-small btn-copy" onclick="copyEntryToClipboard('${groupName}', ${entry.id})">📋 Copy</button>
+                <button class="btn-small btn-delete" onclick="confirmDeleteEntry('${groupName}', ${entry.id})">🗑️ Delete</button>
+            </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+    
+    actionsDiv.style.display = 'block';
+}
+
+// eslint-disable-next-line no-unused-vars
+function confirmDeleteEntry(groupName, entryId) {
+    // First confirmation
+    if (!confirm(`Are you sure you want to delete this entry?\n\nGroup: ${groupName}\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    // Second confirmation
+    if (!confirm('Please confirm deletion. This is your final warning.')) {
+        return;
+    }
+    
+    // Delete the entry
+    const success = StorageModule.deleteEntry(groupName, entryId);
+    
+    if (success) {
+        // Reload the data
+        loadGroupData();
+        
+        // Show feedback
+        showFeedback('Entry deleted successfully', 'success');
+    } else {
+        showFeedback('Failed to delete entry', 'error');
+    }
+}
+
+// eslint-disable-next-line no-unused-vars
+function copyEntryToClipboard(groupName, entryId) {
+    const entries = StorageModule.getGroup(groupName);
+    const entry = entries.find(e => e.id === entryId);
+    
+    if (!entry) {
+        showFeedback('Entry not found', 'error');
+        return;
+    }
+    
+    const tsvData = generateEntryTSV(entry);
+    
+    copyToClipboard(tsvData, 'Entry copied to clipboard! You can paste it into Excel or Google Sheets.');
+}
+
+// eslint-disable-next-line no-unused-vars
+function copyAllEntriesToClipboard() {
+    const groupSelect = document.getElementById('groupSelect');
+    const selectedGroup = groupSelect.value;
+    
+    if (!selectedGroup) {
+        showFeedback('Please select a group first', 'error');
+        return;
+    }
+    
+    const entries = StorageModule.getGroup(selectedGroup);
+    
+    if (entries.length === 0) {
+        showFeedback('No entries to copy', 'error');
+        return;
+    }
+    
+    const tsvData = generateAllEntriesTSV(entries);
+    
+    copyToClipboard(tsvData, `All ${entries.length} entries copied to clipboard! You can paste them into Excel or Google Sheets.`);
+}
+
+// Generate TSV (Tab-Separated Values) for a single entry
+function generateEntryTSV(entry) {
+    const date = new Date(entry.timestamp);
+    const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    
+    let tsv = 'Date\tVolunteers\tHours\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+    tsv += `${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}`;
+    
+    return tsv;
+}
+
+// Generate TSV for all entries
+function generateAllEntriesTSV(entries) {
+    let tsv = 'Date\tVolunteers\tHours\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+    
+    entries.forEach(entry => {
+        const date = new Date(entry.timestamp);
+        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        
+        tsv += `${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}\n`;
+    });
+    
+    return tsv;
+}
+
+// Copy to clipboard helper
+async function copyToClipboard(text, successMessage) {
+    try {
+        await navigator.clipboard.writeText(text);
+        showFeedback(successMessage, 'success');
+    } catch (err) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            showFeedback(successMessage, 'success');
+        } catch (err) {
+            showFeedback('Failed to copy to clipboard', 'error');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+}
+
+// Show feedback message
+function showFeedback(message, type) {
+    const feedbackDiv = document.getElementById('viewerFeedback');
+    feedbackDiv.textContent = message;
+    feedbackDiv.className = `viewer-feedback ${type}`;
+    feedbackDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        feedbackDiv.style.display = 'none';
+    }, 3000);
 }
