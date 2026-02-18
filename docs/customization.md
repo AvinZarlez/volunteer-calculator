@@ -1,6 +1,6 @@
 # 🎨 Customization Guide
 
-[← Back to Documentation Hub](index.md)
+[← Back to Documentation Hub](README.md)
 
 This guide helps you customize the Volunteer Calculator for your specific needs, organization branding, or unique requirements.
 
@@ -411,4 +411,4 @@ If you need help with customizations:
 
 ---
 
-[← Back to Documentation Hub](index.md) | [Next: Future Enhancements →](future-enhancements.md)
+[← Back to Documentation Hub](README.md)

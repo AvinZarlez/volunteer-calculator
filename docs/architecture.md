@@ -57,16 +57,14 @@ volunteer-calculator/
 ├── .eslintrc.json         # ESLint configuration
 │
 ├── docs/                  # Technical documentation
-│   ├── index.md           # Documentation hub (this section)
+│   ├── README.md           # Documentation hub (this section)
 │   ├── architecture.md    # Architecture overview
 │   ├── components.md      # Component documentation
 │   ├── calculations.md    # Algorithm documentation
 │   ├── testing.md         # Testing guide
 │   ├── GITHUB_PAGES_SETUP.md # Deployment guide
 │   ├── browser-compatibility.md # Browser support
-│   ├── customization.md   # Customization guide
-│   ├── future-enhancements.md # Roadmap
-│   └── README.md          # Legacy technical docs (for reference)
+│   └── customization.md   # Customization guide
 │
 ├── .github/               # GitHub-specific files
 │   └── workflows/

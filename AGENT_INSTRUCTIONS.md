@@ -67,7 +67,7 @@ The markdown is copied to the clipboard for easy pasting into reports.
 - `test.html`: Test runner interface
 - `tests.js`: Comprehensive unit test suite
 - `README.md`: User documentation
-- `docs/README.md`: Technical documentation
+- `docs/README.md`: Technical documentation hub
 - `.vscode/`: VS Code configuration for local development
 
 ### Key JavaScript Functions
@@ -249,7 +249,7 @@ npx http-server
 
 ## Future Considerations
 
-Potential enhancements documented in `docs/README.md` under "Future Enhancements" section. Consider:
+For ideas about potential enhancements, consider:
 - Data persistence (localStorage)
 - Result history
 - Comparison features
