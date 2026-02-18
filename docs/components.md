@@ -87,7 +87,16 @@ Each bag entry has:
 - `data-bag-index`: Unique identifier for the bag entry
 - `bagCount[n]`: Number of bags input
 - `bagWeight[n]`: Pounds per bag input
+- `bagType[n]`: Radio buttons for animal type (Dog/Cat/Other)
+- `bagTypeOther[n]`: Optional text field for custom animal type (shown when "Other" is selected)
 - Remove button (× symbol) for entries after the first
+
+**Bag Type Selection:**
+- Dog (default)
+- Cat
+- Other (shows custom text input field)
+- Custom field placeholder: "Specify type (e.g., Bird)"
+- If Other is selected with empty custom field, defaults to "Other"
 
 **Why Dynamic?**
 - Users can process any number of different bag sizes

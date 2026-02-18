@@ -15,9 +15,14 @@ The Volunteer Calculator helps volunteer coordinators and team leaders track and
 
 - **Easy Input Form**: Enter volunteer group name, number of volunteers, and time spent
 - **Flexible Time Units**: Input time in either hours or minutes
+- **Animal Type Selection**: Choose Dog, Cat, or Other (with custom type option) for each bag type
 - **Dynamic Bag Types**: Add any number of bag types with different weights
 - **Instant Calculations**: Get immediate results with detailed breakdowns
+- **Persistent Storage**: Save calculation results to local browser storage
+- **Data Viewer**: View, manage, and delete saved entries by volunteer group
+- **Manual Save Option**: Choose when to save data with a dedicated Save Data button
 - **Markdown Export**: Copy results as a formatted markdown table for reports
+- **Spreadsheet Export**: Copy data in tab-separated format for Excel/Google Sheets
 - **Mobile Responsive**: Works seamlessly on desktop, tablet, and mobile devices
 - **No Installation Required**: Runs entirely in your web browser
 
@@ -57,27 +62,45 @@ Visit [https://avinzarlez.github.io/volunteer-calculator/](https://avinzarlez.gi
 ### Step 2: Enter Bag Data
 
 1. Start with the first bag type (pre-filled)
-2. Enter the **Number of Bags** processed
-3. Enter the **Pounds per Bag** weight
-4. Click **"+ Add Another Bag Type"** to add more bag types if needed
-5. Repeat for each different bag size your team processed
+2. Select the **Bag Type**: Choose Dog, Cat, or Other
+   - If you select "Other", you can specify a custom type (e.g., "Bird")
+   - Leaving the custom field blank will save as "Other"
+3. Enter the **Number of Bags** processed
+4. Enter the **Pounds per Bag** weight
+5. Click **"+ Add Another Bag Type"** to add more bag types if needed
+6. Repeat for each different bag size your team processed
 
-### Step 3: Calculate Results
+### Step 3: Calculate and Save Results
 
 1. Click the **"Calculate"** button
 2. View your results including:
-   - Pounds processed for each bag type
+   - Pounds processed for each bag type (with animal type)
    - Total pet food processed
    - Amount per volunteer
    - Amount per volunteer per hour
+3. Click the **"💾 Save Data"** button to save results to local storage (optional)
+   - Results are indexed by volunteer group name
+   - Saved results persist across browser sessions
 
-### Step 4: Export Results (Optional)
+### Step 4: View Saved Data
+
+1. Click the **"Data Viewer"** tab at the top
+2. Select a volunteer group from the dropdown
+3. View all saved entries with timestamps and bag type details
+4. Copy individual entries or all entries to clipboard for spreadsheet use
+5. Delete unwanted entries (requires two confirmations for safety)
+
+### Step 5: Export Results (Optional)
 
 Click **"📋 Copy Results as Markdown Table"** to copy a formatted table to your clipboard. Paste it into:
 - GitHub issues or pull requests
 - Markdown documents
 - Team reports
 - Email messages
+
+From the Data Viewer, you can also:
+- Copy individual entries in tab-separated format for spreadsheets
+- Copy all entries for a group at once
 
 ## 📊 Example Usage
 
