@@ -3,6 +3,7 @@
 A simple, intuitive web application for calculating volunteer pet food packing effort and productivity metrics.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://avinzarlez.github.io/volunteer-calculator/)
+[![GitHub Pages](https://github.com/AvinZarlez/volunteer-calculator/actions/workflows/deploy.yml/badge.svg)](https://github.com/AvinZarlez/volunteer-calculator/actions/workflows/deploy.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## 📋 Overview
@@ -125,6 +126,7 @@ All tests and linting run automatically via GitHub Actions on every push and pul
 
 - **User Guide**: This README
 - **Technical Documentation**: See [docs/README.md](docs/README.md) for detailed technical information
+- **GitHub Pages Setup**: See [docs/GITHUB_PAGES_SETUP.md](docs/GITHUB_PAGES_SETUP.md) for deployment instructions
 - **Agent Instructions**: See [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md) for AI agent guidance
 
 ## 🛠️ Technology Stack
