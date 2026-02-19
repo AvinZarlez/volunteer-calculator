@@ -1907,7 +1907,7 @@ function copySelectedEntries() {
     }
     
     const entries = getSelectedEntriesData();
-    const tsvData = getTSVHeader() + entries.map(entry => entryToTSVLine(entry)).join('\n');
+    const tsvData = getTSVHeader() + entries.map(entry => entryToTSVLine(entry)).join('\n') + '\n';
     
     navigator.clipboard.writeText(tsvData).then(() => {
         showFeedback(`Copied ${selectedEntries.size} entries to clipboard`, 'success');
