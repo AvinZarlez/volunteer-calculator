@@ -142,6 +142,29 @@ window.calculationResults = null; // Stores the last calculation results
 - `calculationResults` is cleared on form reset
 - No persistent storage (intentional - privacy by design)
 
+### Helper Functions
+
+The application uses several helper functions to reduce code duplication and improve maintainability:
+
+**Constants:**
+- `STORAGE_KEY`: localStorage key for data persistence
+- `DECIMAL_PLACES`: Number of decimal places for formatting (2)
+- `UNIT_WEIGHT`: Weight unit label ('lbs')
+- `UNIT_RATE`: Rate unit label ('lbs/hour')
+- `TSV_HEADER`: Tab-separated header for data export
+
+**Formatting Helpers:**
+- `formatNumber(num, places)`: Formats numbers to specified decimal places
+- `formatBagTypes(bagResults)`: Formats bag type data for display
+- `formatTimestamp(timestamp)`: Formats dates consistently
+- `trimGroupName(name)`: Trims whitespace from group names
+
+**UI Helpers:**
+- `clearDataViewerUI()`: Resets data viewer table and summary
+- `copyToClipboardLegacy(text, elementId, message)`: Unified clipboard operation with fallback
+
+These helpers eliminate ~80+ lines of duplicate code across the application.
+
 ## Component Communication
 
 ### Event-Driven Architecture
@@ -249,6 +272,8 @@ if (!groupName || groupName.trim() === '') {
 3. Event delegation where possible
 4. Lazy loading (results hidden until needed)
 5. No external dependencies
+6. **Helper functions to reduce code duplication** (reduces parsing time)
+7. **Shared formatting logic** (consistent output with less code)
 
 ## Development Workflow
 
