@@ -957,7 +957,6 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
         totalVolunteerHours += entry.numVolunteers * entry.durationHours;
     });
     
-    const avgPoundsPerVolunteer = totalVolunteerHours > 0 ? totalPounds / (totalVolunteerHours / entries.reduce((sum, e) => sum + e.durationHours, 0) * entries.length) : 0;
     const avgPoundsPerVolPerHour = totalVolunteerHours > 0 ? totalPounds / totalVolunteerHours : 0;
     
     // Display summary
@@ -965,7 +964,7 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
         summaryDiv.innerHTML = `
             <div class="summary-stats">
                 <div class="stat-item">
-                    <span class="stat-label">Total Pet Food Packed:</span>
+                    <span class="stat-label">Total Pet Food Processed:</span>
                     <span class="stat-value">${totalPounds.toFixed(2)} lbs</span>
                 </div>
                 <div class="stat-item">
