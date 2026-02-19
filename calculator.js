@@ -7,6 +7,11 @@ let currentView = 'calculator'; // 'calculator' or 'dataViewer' // eslint-disabl
 
 // Constants
 const DEFAULT_BAG_TYPE = 'Dog';
+const STORAGE_KEY = 'volunteerCalculatorData';
+const DECIMAL_PLACES = 2;
+const UNIT_WEIGHT = 'lbs';
+const UNIT_RATE = 'lbs/hour';
+const TSV_HEADER = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
 
 // Local Storage Module
 const StorageModule = {
@@ -20,7 +25,7 @@ const StorageModule = {
         };
         
         const allData = this.getAll();
-        const groupName = result.groupName.trim();
+        const groupName = normalizeGroupName(result.groupName);
         
         if (!allData[groupName]) {
             allData[groupName] = [];
@@ -29,7 +34,7 @@ const StorageModule = {
         allData[groupName].push(entry);
         
         try {
-            localStorage.setItem('volunteerCalculatorData', JSON.stringify(allData));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
             return true;
         } catch (e) {
             console.error('Failed to save to localStorage:', e);
@@ -40,7 +45,7 @@ const StorageModule = {
     // Get all data
     getAll: function() {
         try {
-            const data = localStorage.getItem('volunteerCalculatorData');
+            const data = localStorage.getItem(STORAGE_KEY);
             return data ? JSON.parse(data) : {};
         } catch (e) {
             console.error('Failed to read from localStorage:', e);
@@ -51,7 +56,7 @@ const StorageModule = {
     // Get entries for a specific group
     getGroup: function(groupName) {
         const allData = this.getAll();
-        return allData[groupName.trim()] || [];
+        return allData[normalizeGroupName(groupName)] || [];
     },
     
     // Get all group names
@@ -63,7 +68,7 @@ const StorageModule = {
     // Delete a specific entry
     deleteEntry: function(groupName, entryId) {
         const allData = this.getAll();
-        const groupData = allData[groupName.trim()];
+        const groupData = allData[normalizeGroupName(groupName)];
         
         if (!groupData) return false;
         
@@ -74,11 +79,11 @@ const StorageModule = {
         
         // Remove group if empty
         if (groupData.length === 0) {
-            delete allData[groupName.trim()];
+            delete allData[normalizeGroupName(groupName)];
         }
         
         try {
-            localStorage.setItem('volunteerCalculatorData', JSON.stringify(allData));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
             return true;
         } catch (e) {
             console.error('Failed to delete from localStorage:', e);
@@ -88,9 +93,39 @@ const StorageModule = {
     
     // Clear all data (for testing)
     clear: function() {
-        localStorage.removeItem('volunteerCalculatorData');
+        localStorage.removeItem(STORAGE_KEY);
     }
 };
+
+// Helper Functions
+// Format a number to specified decimal places
+function formatNumber(num, places = DECIMAL_PLACES) {
+    return num.toFixed(places);
+}
+
+// Format bag types for display
+function formatBagTypes(bagResults) {
+    if (!bagResults || bagResults.length === 0) {
+        return 'N/A';
+    }
+    return bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
+}
+
+// Format timestamp for display
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+}
+
+// Generate element ID for bag fields
+function getElementId(type, index) {
+    return `${type}${index}`;
+}
+
+// Normalize group name (trim whitespace)
+function normalizeGroupName(name) {
+    return name.trim();
+}
 
 // Initialize on page load (only in browser)
 if (typeof document !== 'undefined') {
