@@ -895,7 +895,7 @@ footer a:hover {
 .selection-banner {
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 15px 20px;
