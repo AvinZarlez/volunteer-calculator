@@ -117,11 +117,6 @@ function formatTimestamp(timestamp) {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 }
 
-// Generate element ID for bag fields
-function getElementId(type, index) {
-    return `${type}${index}`;
-}
-
 // Trim group name
 function trimGroupName(name) {
     return name.trim();
@@ -804,7 +799,7 @@ async function copyResultsToClipboard() {
     }
     
     const markdown = generateMarkdownTable(window.calculationResults);
-    await copyToClipboardLegacy(markdown, 'copyFeedback', 'Results copied to clipboard!');
+    await copyToClipboardLegacy(markdown);
 }
 
 // Copy entries to spreadsheet (TSV format)
@@ -843,11 +838,11 @@ async function copyEntriesToSpreadsheet() {
         tsvData += `${results.groupName}\t${formattedDate}\t${results.numVolunteers}\t${formatNumber(results.durationHours)}\t${bagTypesStr}\t${formatNumber(results.totalPounds)}\t${formatNumber(results.poundsPerVolunteer)}\t${formatNumber(results.poundsPerVolunteerPerHour)}`;
     }
     
-    await copyToClipboardLegacy(tsvData, 'copyFeedback', 'Data copied to clipboard!');
+    await copyToClipboardLegacy(tsvData);
 }
 
 // Copy to clipboard helper for legacy feedback system
-async function copyToClipboardLegacy(text, feedbackElementId, successMessage) {
+async function copyToClipboardLegacy(text) {
     try {
         await navigator.clipboard.writeText(text);
         showCopyFeedback();
