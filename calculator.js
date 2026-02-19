@@ -325,10 +325,20 @@ function getBagData() {
     return bags;
 }
 
+// Normalize group name to Title Case
+function normalizeGroupName(name) {
+    return name.trim()
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
 // Get all group data from the form
 function getGroupData() {
     const groupEntries = document.querySelectorAll('.group-entry');
     const groups = [];
+    const seenNames = new Set();
     
     groupEntries.forEach((entry) => {
         const index = entry.getAttribute('data-group-index');
@@ -340,8 +350,19 @@ function getGroupData() {
             const volunteers = parseInt(volunteersInput.value);
             
             if (name && !isNaN(volunteers) && volunteers > 0) {
+                // Normalize the name to Title Case
+                const normalizedName = normalizeGroupName(name);
+                
+                // Check for duplicate names
+                if (seenNames.has(normalizedName.toLowerCase())) {
+                    alert(`Duplicate group name detected: "${normalizedName}"\n\nEach volunteer group must have a unique name.`);
+                    throw new Error('Duplicate group name');
+                }
+                
+                seenNames.add(normalizedName.toLowerCase());
+                
                 groups.push({
-                    name: name,
+                    name: normalizedName,
                     volunteers: volunteers
                 });
             }
@@ -605,6 +626,46 @@ function showSaveFeedback(message, success) {
 
 // Generate markdown table
 function generateMarkdownTable(results) {
+    // Handle multiple groups result structure
+    if (results.groupResults && results.groupResults.length > 0) {
+        let markdown = `# Volunteer Results\n\n`;
+        markdown += `## Input Data\n\n`;
+        markdown += `| Metric | Value |\n`;
+        markdown += `|--------|-------|\n`;
+        markdown += `| Time Volunteered | ${results.durationHours.toFixed(2)} hours |\n\n`;
+        
+        markdown += `## Bags Processed\n\n`;
+        markdown += `| Animal Type | Bag Number | Number of Bags | Pounds per Bag | Total Pounds |\n`;
+        markdown += `|-------------|------------|----------------|----------------|-------------|\n`;
+        
+        results.bagResults.forEach((bag) => {
+            markdown += `| ${bag.type} | Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${bag.total.toFixed(2)} lbs |\n`;
+        });
+        
+        // Per-group results
+        markdown += `\n## Per-Group Results\n\n`;
+        markdown += `| Group Name | Volunteers | Pounds/Volunteer | Pounds/Vol/Hour |\n`;
+        markdown += `|------------|------------|------------------|------------------|\n`;
+        
+        results.groupResults.forEach((groupResult) => {
+            markdown += `| ${groupResult.groupName} | ${groupResult.numVolunteers} | ${groupResult.poundsPerVolunteer.toFixed(2)} lbs | ${groupResult.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour |\n`;
+        });
+        
+        // Combined totals if multiple groups
+        if (results.groupResults.length > 1) {
+            markdown += `\n## Combined Totals\n\n`;
+            markdown += `| Metric | Value |\n`;
+            markdown += `|--------|-------|\n`;
+            markdown += `| Total Pet Food Processed | ${results.totalPounds.toFixed(2)} lbs |\n`;
+            markdown += `| Total Volunteers | ${results.totalVolunteers} |\n`;
+            markdown += `| Average per Volunteer | ${results.totalPoundsPerVolunteer.toFixed(2)} lbs |\n`;
+            markdown += `| Average per Volunteer per Hour | ${results.totalPoundsPerVolunteerPerHour.toFixed(2)} lbs/hour |\n`;
+        }
+        
+        return markdown;
+    }
+    
+    // Legacy single group structure
     let markdown = `# ${results.groupName} - Volunteer Results\n\n`;
     markdown += `## Input Data\n\n`;
     markdown += `| Metric | Value |\n`;
@@ -636,7 +697,14 @@ function handleCalculate(event) {
     event.preventDefault();
     
     // Get input values
-    const groups = getGroupData();
+    let groups;
+    try {
+        groups = getGroupData();
+    } catch (error) {
+        // Error already shown to user in getGroupData
+        return;
+    }
+    
     const durationInput = document.getElementById('duration').value;
     const timeUnit = document.getElementById('timeUnit').value;
     const bags = getBagData();
@@ -811,6 +879,14 @@ function refreshGroupList() {
     
     groupSelect.innerHTML = '<option value="">-- Select a volunteer group --</option>';
     
+    // Add "All Groups" option if there are any groups
+    if (groups.length > 0) {
+        const allOption = document.createElement('option');
+        allOption.value = '__ALL_GROUPS__';
+        allOption.textContent = 'All Groups';
+        groupSelect.appendChild(allOption);
+    }
+    
     groups.forEach(group => {
         const option = document.createElement('option');
         option.value = group;
@@ -818,9 +894,13 @@ function refreshGroupList() {
         groupSelect.appendChild(option);
     });
     
-    // Clear the data table
+    // Clear the data table and summary
     document.getElementById('dataTableBody').innerHTML = '';
     document.getElementById('dataViewerActions').style.display = 'none';
+    const summaryDiv = document.getElementById('groupSummary');
+    if (summaryDiv) {
+        summaryDiv.style.display = 'none';
+    }
 }
 
 function loadGroupData() {
@@ -830,21 +910,75 @@ function loadGroupData() {
     if (!selectedGroup) {
         document.getElementById('dataTableBody').innerHTML = '';
         document.getElementById('dataViewerActions').style.display = 'none';
+        const summaryDiv = document.getElementById('groupSummary');
+        if (summaryDiv) {
+            summaryDiv.style.display = 'none';
+        }
         return;
     }
     
-    const entries = StorageModule.getGroup(selectedGroup);
-    displayGroupEntries(selectedGroup, entries);
+    if (selectedGroup === '__ALL_GROUPS__') {
+        // Load all entries from all groups
+        const allData = StorageModule.getAll();
+        const allEntries = [];
+        Object.keys(allData).forEach(groupName => {
+            allData[groupName].forEach(entry => {
+                allEntries.push(entry);
+            });
+        });
+        displayGroupEntries('All Groups', allEntries, true);
+    } else {
+        const entries = StorageModule.getGroup(selectedGroup);
+        displayGroupEntries(selectedGroup, entries, false);
+    }
 }
 
-function displayGroupEntries(groupName, entries) {
+function displayGroupEntries(groupName, entries, isAllGroups = false) {
     const tableBody = document.getElementById('dataTableBody');
     const actionsDiv = document.getElementById('dataViewerActions');
+    const summaryDiv = document.getElementById('groupSummary');
     
     if (entries.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="9" class="no-data">No entries found for this group</td></tr>';
         actionsDiv.style.display = 'none';
+        if (summaryDiv) {
+            summaryDiv.style.display = 'none';
+        }
         return;
+    }
+    
+    // Calculate summary statistics
+    let totalPounds = 0;
+    let totalVolunteerHours = 0;
+    let totalEntries = entries.length;
+    
+    entries.forEach(entry => {
+        totalPounds += entry.totalPounds;
+        totalVolunteerHours += entry.numVolunteers * entry.durationHours;
+    });
+    
+    const avgPoundsPerVolunteer = totalVolunteerHours > 0 ? totalPounds / (totalVolunteerHours / entries.reduce((sum, e) => sum + e.durationHours, 0) * entries.length) : 0;
+    const avgPoundsPerVolPerHour = totalVolunteerHours > 0 ? totalPounds / totalVolunteerHours : 0;
+    
+    // Display summary
+    if (summaryDiv) {
+        summaryDiv.innerHTML = `
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total Pet Food Packed:</span>
+                    <span class="stat-value">${totalPounds.toFixed(2)} lbs</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Entries:</span>
+                    <span class="stat-value">${totalEntries}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Avg Pounds/Volunteer/Hour:</span>
+                    <span class="stat-value">${avgPoundsPerVolPerHour.toFixed(2)} lbs/hour</span>
+                </div>
+            </div>
+        `;
+        summaryDiv.style.display = 'block';
     }
     
     tableBody.innerHTML = '';
@@ -862,6 +996,12 @@ function displayGroupEntries(groupName, entries) {
             bagTypesStr = 'N/A';
         }
         
+        // For "All Groups" view, disable delete and modify copy
+        const actionButtons = isAllGroups
+            ? `<button class="btn-small btn-copy" onclick="copyEntryToClipboard('${entry.groupName}', '${entry.id}')">📋 Copy</button>`
+            : `<button class="btn-small btn-copy" onclick="copyEntryToClipboard('${groupName}', '${entry.id}')">📋 Copy</button>
+               <button class="btn-small btn-delete" onclick="confirmDeleteEntry('${groupName}', '${entry.id}')">🗑️ Delete</button>`;
+        
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>${formattedDate}</td>
@@ -872,8 +1012,7 @@ function displayGroupEntries(groupName, entries) {
             <td>${entry.poundsPerVolunteer.toFixed(2)}</td>
             <td>${entry.poundsPerVolunteerPerHour.toFixed(2)}</td>
             <td class="action-buttons">
-                <button class="btn-small btn-copy" onclick="copyEntryToClipboard('${groupName}', '${entry.id}')">📋 Copy</button>
-                <button class="btn-small btn-delete" onclick="confirmDeleteEntry('${groupName}', '${entry.id}')">🗑️ Delete</button>
+                ${actionButtons}
             </td>
         `;
         
@@ -959,15 +1098,15 @@ function generateEntryTSV(entry) {
         bagTypesStr = 'N/A';
     }
     
-    let tsv = 'Date\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
-    tsv += `${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${bagTypesStr}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}`;
+    let tsv = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+    tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${bagTypesStr}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}`;
     
     return tsv;
 }
 
 // Generate TSV for all entries
 function generateAllEntriesTSV(entries) {
-    let tsv = 'Date\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+    let tsv = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
     
     entries.forEach(entry => {
         const date = new Date(entry.timestamp);
@@ -981,7 +1120,7 @@ function generateAllEntriesTSV(entries) {
             bagTypesStr = 'N/A';
         }
         
-        tsv += `${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${bagTypesStr}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}\n`;
+        tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${bagTypesStr}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}\n`;
     });
     
     return tsv;
