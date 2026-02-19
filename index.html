@@ -126,6 +126,33 @@
                                 <button id="refreshGroupsBtn" class="btn-refresh" title="Refresh group list">🔄</button>
                             </div>
                         </div>
+                        
+                        <div class="form-group">
+                            <label for="dateFilterType">Filter by Date:</label>
+                            <select id="dateFilterType" class="date-filter-select">
+                                <option value="all">All Time</option>
+                                <option value="calendar-year">Calendar Year</option>
+                                <option value="last-12-months">Last 12 Months</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        
+                        <div id="customDateRange" class="custom-date-range" style="display: none;">
+                            <div class="form-group">
+                                <label for="startDate">Start Date:</label>
+                                <div class="date-input-with-today">
+                                    <input type="date" id="startDate" class="date-input">
+                                    <button type="button" class="btn-today" onclick="setToday('startDate')" title="Set to today">📅 Today</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="endDate">End Date:</label>
+                                <div class="date-input-with-today">
+                                    <input type="date" id="endDate" class="date-input">
+                                    <button type="button" class="btn-today" onclick="setToday('endDate')" title="Set to today">📅 Today</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="viewerFeedback" class="viewer-feedback" style="display: none;"></div>

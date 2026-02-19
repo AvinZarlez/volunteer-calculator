@@ -132,6 +132,93 @@ function clearDataViewerUI() {
     }
 }
 
+// Date Filter Functions
+// eslint-disable-next-line no-unused-vars
+function setToday(inputId) {
+    const dateInput = document.getElementById(inputId);
+    if (dateInput) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
+        
+        // Trigger change event to reload data
+        loadGroupData();
+    }
+}
+
+function getDateFilterRange() {
+    const filterType = document.getElementById('dateFilterType').value;
+    const now = new Date();
+    
+    let startDate = null;
+    let endDate = null;
+    
+    switch (filterType) {
+    case 'all':
+        // No filtering
+        return { startDate: null, endDate: null };
+        
+    case 'calendar-year': {
+        // From January 1st of current year to now
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = now;
+        break;
+    }
+        
+    case 'last-12-months': {
+        // From 12 months ago to now
+        startDate = new Date(now);
+        startDate.setFullYear(now.getFullYear() - 1);
+        endDate = now;
+        break;
+    }
+        
+    case 'custom': {
+        // Use custom date inputs
+        const startInput = document.getElementById('startDate').value;
+        const endInput = document.getElementById('endDate').value;
+        
+        if (startInput) {
+            startDate = new Date(startInput);
+            startDate.setHours(0, 0, 0, 0);
+        }
+        
+        if (endInput) {
+            endDate = new Date(endInput);
+            endDate.setHours(23, 59, 59, 999);
+        }
+        break;
+    }
+    }
+    
+    return { startDate, endDate };
+}
+
+function filterEntriesByDate(entries) {
+    const { startDate, endDate } = getDateFilterRange();
+    
+    // If no date filter is applied, return all entries
+    if (!startDate && !endDate) {
+        return entries;
+    }
+    
+    return entries.filter(entry => {
+        const entryDate = new Date(entry.timestamp);
+        
+        // Check if entry is within date range
+        if (startDate && entryDate < startDate) {
+            return false;
+        }
+        if (endDate && entryDate > endDate) {
+            return false;
+        }
+        
+        return true;
+    });
+}
+
 // Initialize on page load (only in browser)
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', function() {
@@ -930,6 +1017,30 @@ function initializeViewSwitching() {
     if (refreshBtn) {
         refreshBtn.addEventListener('click', refreshGroupList);
     }
+    
+    // Initialize date filter components
+    const dateFilterType = document.getElementById('dateFilterType');
+    if (dateFilterType) {
+        dateFilterType.addEventListener('change', function() {
+            const customDateRange = document.getElementById('customDateRange');
+            if (this.value === 'custom') {
+                customDateRange.style.display = 'block';
+            } else {
+                customDateRange.style.display = 'none';
+            }
+            loadGroupData();
+        });
+    }
+    
+    const startDate = document.getElementById('startDate');
+    if (startDate) {
+        startDate.addEventListener('change', loadGroupData);
+    }
+    
+    const endDate = document.getElementById('endDate');
+    if (endDate) {
+        endDate.addEventListener('change', loadGroupData);
+    }
 }
 
 function switchView(view) {
@@ -1000,10 +1111,14 @@ function loadGroupData() {
                 allEntries.push(entry);
             });
         });
-        displayGroupEntries('All Groups', allEntries, true);
+        // Apply date filter
+        const filteredEntries = filterEntriesByDate(allEntries);
+        displayGroupEntries('All Groups', filteredEntries, true);
     } else {
         const entries = StorageModule.getGroup(selectedGroup);
-        displayGroupEntries(selectedGroup, entries, false);
+        // Apply date filter
+        const filteredEntries = filterEntriesByDate(entries);
+        displayGroupEntries(selectedGroup, filteredEntries, false);
     }
 }
 
