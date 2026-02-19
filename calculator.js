@@ -794,28 +794,7 @@ async function copyResultsToClipboard() {
     }
     
     const markdown = generateMarkdownTable(window.calculationResults);
-    
-    try {
-        await navigator.clipboard.writeText(markdown);
-        showCopyFeedback();
-    } catch (err) {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = markdown;
-        textArea.style.position = 'fixed';
-        textArea.style.opacity = '0';
-        document.body.appendChild(textArea);
-        textArea.select();
-        
-        try {
-            document.execCommand('copy');
-            showCopyFeedback();
-        } catch (err) {
-            alert('Failed to copy to clipboard. Please try again.');
-        }
-        
-        document.body.removeChild(textArea);
-    }
+    await copyToClipboardLegacy(markdown, 'copyFeedback', 'Results copied to clipboard!');
 }
 
 // Copy entries to spreadsheet (TSV format)
@@ -854,13 +833,18 @@ async function copyEntriesToSpreadsheet() {
         tsvData += `${results.groupName}\t${formattedDate}\t${results.numVolunteers}\t${formatNumber(results.durationHours)}\t${bagTypesStr}\t${formatNumber(results.totalPounds)}\t${formatNumber(results.poundsPerVolunteer)}\t${formatNumber(results.poundsPerVolunteerPerHour)}`;
     }
     
+    await copyToClipboardLegacy(tsvData, 'copyFeedback', 'Data copied to clipboard!');
+}
+
+// Copy to clipboard helper for legacy feedback system
+async function copyToClipboardLegacy(text, feedbackElementId, successMessage) {
     try {
-        await navigator.clipboard.writeText(tsvData);
+        await navigator.clipboard.writeText(text);
         showCopyFeedback();
     } catch (err) {
         // Fallback for older browsers
         const textArea = document.createElement('textarea');
-        textArea.value = tsvData;
+        textArea.value = text;
         textArea.style.position = 'fixed';
         textArea.style.opacity = '0';
         document.body.appendChild(textArea);
