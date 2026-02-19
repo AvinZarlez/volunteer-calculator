@@ -11,7 +11,12 @@ const {
     importDataFromCSV,
     parseCSVLine,
     entryToCSVLine,
-    getCSVHeader
+    getCSVHeader,
+    getTSVHeader,
+    HEADER_FIELDS,
+    areEntriesDuplicate,
+    mergeImportedData,
+    generateGroupEntriesCSV
 } = require('./calculator.js');
 
 // Simple test framework for Node.js
@@ -695,6 +700,26 @@ runner.describe('CSV Export and Import Tests', (it) => {
     // Mock localStorage in global scope
     global.localStorage = mockLocalStorage;
     
+    it('should have unified header fields', () => {
+        assertEquals(HEADER_FIELDS.length, 8, 'Should have 8 header fields');
+        assertEquals(HEADER_FIELDS[0], 'Group Name', 'First field should be Group Name');
+        assertEquals(HEADER_FIELDS[7], 'Pounds per Volunteer per Hour', 'Last field should be Pounds per Volunteer per Hour');
+    });
+    
+    it('should generate TSV header from unified fields', () => {
+        const tsvHeader = getTSVHeader();
+        assertTrue(tsvHeader.includes('\t'), 'TSV header should contain tabs');
+        assertTrue(tsvHeader.endsWith('\n'), 'TSV header should end with newline');
+        assertEquals(tsvHeader.split('\t').length, 8, 'TSV header should have 8 tab-separated fields');
+    });
+    
+    it('should generate CSV header from unified fields', () => {
+        const csvHeader = getCSVHeader();
+        assertTrue(csvHeader.includes(','), 'CSV header should contain commas');
+        assertTrue(!csvHeader.includes('\n'), 'CSV header should not contain newline');
+        assertEquals(csvHeader.split(',').length, 8, 'CSV header should have 8 comma-separated fields');
+    });
+    
     it('should generate correct CSV header', () => {
         const header = getCSVHeader();
         assertEquals(header, 'Group Name,Date,Volunteers,Hours,Bag Types,Total Pounds,Pounds per Volunteer,Pounds per Volunteer per Hour', 'CSV header should match expected format');
@@ -914,6 +939,98 @@ Test Group,1/2/2024 1:00:00 PM,12,3.00,Cat (3),300.00,25.00,8.33`;
         const groupAEntries = StorageModule.getGroup('Group A');
         assertEquals(groupAEntries.length, 1, 'Group A should have 1 entry');
         assertEquals(groupAEntries[0].numVolunteers, 10, 'Group A volunteers should match');
+    });
+    
+    it('should detect duplicate entries correctly', () => {
+        const entry1 = {
+            groupName: 'Test Group',
+            timestamp: '2024-01-01T12:00:00.000Z',
+            numVolunteers: 10,
+            durationHours: 2,
+            totalPounds: 250
+        };
+        
+        const entry2 = {
+            groupName: 'Test Group',
+            timestamp: '2024-01-01T12:00:00.000Z',
+            numVolunteers: 10,
+            durationHours: 2,
+            totalPounds: 250
+        };
+        
+        const entry3 = {
+            groupName: 'Test Group',
+            timestamp: '2024-01-01T12:00:00.000Z',
+            numVolunteers: 11,  // Different volunteers
+            durationHours: 2,
+            totalPounds: 250
+        };
+        
+        assertTrue(areEntriesDuplicate(entry1, entry2), 'Identical entries should be duplicates');
+        assertTrue(!areEntriesDuplicate(entry1, entry3), 'Different entries should not be duplicates');
+    });
+    
+    it('should merge data without duplicates', () => {
+        StorageModule.clear();
+        
+        const existingData = {
+            'Test Group': [
+                {
+                    groupName: 'Test Group',
+                    timestamp: '2024-01-01T12:00:00.000Z',
+                    numVolunteers: 10,
+                    durationHours: 2,
+                    totalPounds: 250,
+                    id: '1'
+                }
+            ]
+        };
+        
+        const newData = {
+            'Test Group': [
+                {
+                    groupName: 'Test Group',
+                    timestamp: '2024-01-01T12:00:00.000Z',
+                    numVolunteers: 10,
+                    durationHours: 2,
+                    totalPounds: 250,
+                    id: '2'  // Different ID but same data
+                },
+                {
+                    groupName: 'Test Group',
+                    timestamp: '2024-01-02T12:00:00.000Z',
+                    numVolunteers: 12,
+                    durationHours: 3,
+                    totalPounds: 300,
+                    id: '3'  // Unique entry
+                }
+            ]
+        };
+        
+        const { mergedData, addedCount, skippedCount } = mergeImportedData(existingData, newData);
+        
+        assertEquals(addedCount, 1, 'Should add 1 new entry');
+        assertEquals(skippedCount, 1, 'Should skip 1 duplicate');
+        assertEquals(mergedData['Test Group'].length, 2, 'Should have 2 entries total');
+    });
+    
+    it('should generate CSV for group entries', () => {
+        const bags = [{ count: 5, weight: 50, type: 'Dog' }];
+        const result1 = calculateResults('Test Group', 10, 2, bags);
+        const result2 = calculateResults('Test Group', 8, 1.5, bags);
+        
+        const entries = [
+            { ...result1, timestamp: '2024-01-01T12:00:00.000Z', id: '1' },
+            { ...result2, timestamp: '2024-01-02T12:00:00.000Z', id: '2' }
+        ];
+        
+        const csv = generateGroupEntriesCSV(entries);
+        
+        assertTrue(csv.includes(getCSVHeader()), 'CSV should include header');
+        assertTrue(csv.includes('Test Group'), 'CSV should include group name');
+        
+        const lines = csv.split('\n').filter(l => l.trim() !== '');
+        assertEquals(lines.length, 3, 'Should have header + 2 data lines');
     });
 });
 

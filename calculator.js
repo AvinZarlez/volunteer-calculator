@@ -11,7 +11,28 @@ const STORAGE_KEY = 'volunteerCalculatorData';
 const DECIMAL_PLACES = 2;
 const UNIT_WEIGHT = 'lbs';
 const UNIT_RATE = 'lbs/hour';
-const TSV_HEADER = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+
+// Unified header fields for CSV and TSV export
+const HEADER_FIELDS = [
+    'Group Name',
+    'Date',
+    'Volunteers',
+    'Hours',
+    'Bag Types',
+    'Total Pounds',
+    'Pounds per Volunteer',
+    'Pounds per Volunteer per Hour'
+];
+
+// Get TSV header
+function getTSVHeader() {
+    return HEADER_FIELDS.join('\t') + '\n';
+}
+
+// Get CSV header
+function getCSVHeader() {
+    return HEADER_FIELDS.join(',');
+}
 
 // Local Storage Module
 const StorageModule = {
@@ -914,7 +935,7 @@ async function copyEntriesToSpreadsheet() {
     // Check if this is multiple groups or single group
     if (results.groupResults && results.groupResults.length > 0) {
         // Multiple groups - copy all group entries
-        tsvData = TSV_HEADER;
+        tsvData = getTSVHeader();
         
         results.groupResults.forEach(groupResult => {
             const date = new Date();
@@ -933,7 +954,7 @@ async function copyEntriesToSpreadsheet() {
         // Format bag types
         const bagTypesStr = formatBagTypes(results.bagResults);
         
-        tsvData = TSV_HEADER;
+        tsvData = getTSVHeader();
         tsvData += `${results.groupName}\t${formattedDate}\t${results.numVolunteers}\t${formatNumber(results.durationHours)}\t${bagTypesStr}\t${formatNumber(results.totalPounds)}\t${formatNumber(results.poundsPerVolunteer)}\t${formatNumber(results.poundsPerVolunteerPerHour)}`;
     }
     
@@ -1007,7 +1028,12 @@ if (typeof module !== 'undefined' && module.exports) {
         importDataFromCSV,
         parseCSVLine,
         entryToCSVLine,
-        getCSVHeader
+        getCSVHeader,
+        getTSVHeader,
+        HEADER_FIELDS,
+        areEntriesDuplicate,
+        mergeImportedData,
+        generateGroupEntriesCSV
     };
 }
 
@@ -1285,6 +1311,62 @@ function copyAllEntriesToClipboard() {
     copyToClipboard(tsvData, `All ${entries.length} entries copied to clipboard! You can paste them into Excel or Google Sheets.`);
 }
 
+// Generate CSV for group entries
+function generateGroupEntriesCSV(entries) {
+    let csv = getCSVHeader() + '\n';
+    
+    entries.forEach(entry => {
+        csv += entryToCSVLine(entry);
+    });
+    
+    return csv;
+}
+
+// Download group entries as CSV file
+// eslint-disable-next-line no-unused-vars
+function downloadGroupEntriesAsCSV() {
+    const groupSelect = document.getElementById('groupSelect');
+    const selectedGroup = groupSelect.value;
+    
+    if (!selectedGroup) {
+        showFeedback('Please select a group first', 'error');
+        return;
+    }
+    
+    const entries = StorageModule.getGroup(selectedGroup);
+    
+    if (entries.length === 0) {
+        showFeedback('No entries to download', 'error');
+        return;
+    }
+    
+    try {
+        const csv = generateGroupEntriesCSV(entries);
+        
+        // Create a blob and download link
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        // Use group name in filename, sanitize it
+        const sanitizedGroupName = selectedGroup.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+        const filename = `${sanitizedGroupName}-entries-${new Date().toISOString().split('T')[0]}.csv`;
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showFeedback(`Downloaded ${entries.length} entries for ${selectedGroup}!`, 'success');
+    } catch (err) {
+        console.error('Download failed:', err);
+        showFeedback('Failed to download entries', 'error');
+    }
+}
+
 // Generate TSV (Tab-Separated Values) for a single entry
 function generateEntryTSV(entry) {
     const formattedDate = formatTimestamp(entry.timestamp);
@@ -1292,7 +1374,7 @@ function generateEntryTSV(entry) {
     // Format bag types
     const bagTypesStr = formatBagTypes(entry.bagResults);
     
-    let tsv = TSV_HEADER;
+    let tsv = getTSVHeader();
     tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${formatNumber(entry.durationHours)}\t${bagTypesStr}\t${formatNumber(entry.totalPounds)}\t${formatNumber(entry.poundsPerVolunteer)}\t${formatNumber(entry.poundsPerVolunteerPerHour)}`;
     
     return tsv;
@@ -1300,7 +1382,7 @@ function generateEntryTSV(entry) {
 
 // Generate TSV for all entries
 function generateAllEntriesTSV(entries) {
-    let tsv = TSV_HEADER;
+    let tsv = getTSVHeader();
     
     entries.forEach(entry => {
         const formattedDate = formatTimestamp(entry.timestamp);
@@ -1352,11 +1434,6 @@ function showFeedback(message, type) {
 }
 
 // CSV Export and Import Functions
-
-// Convert TSV header to CSV header
-function getCSVHeader() {
-    return 'Group Name,Date,Volunteers,Hours,Bag Types,Total Pounds,Pounds per Volunteer,Pounds per Volunteer per Hour';
-}
 
 // Generate CSV for all entries in storage
 function generateAllDataCSV() {
@@ -1586,6 +1663,48 @@ function importDataFromCSV(csvContent) {
     return newData;
 }
 
+// Check if two entries are duplicates (same group, date, volunteers, hours, total pounds)
+function areEntriesDuplicate(entry1, entry2) {
+    // Compare key fields to determine if entries are the same
+    return entry1.groupName === entry2.groupName &&
+           entry1.timestamp === entry2.timestamp &&
+           entry1.numVolunteers === entry2.numVolunteers &&
+           entry1.durationHours === entry2.durationHours &&
+           entry1.totalPounds === entry2.totalPounds;
+}
+
+// Merge imported data with existing data (add without duplicates)
+function mergeImportedData(existingData, newData) {
+    const mergedData = JSON.parse(JSON.stringify(existingData)); // Deep clone
+    let addedCount = 0;
+    let skippedCount = 0;
+    
+    // Iterate through new data
+    Object.keys(newData).forEach(groupName => {
+        const newEntries = newData[groupName];
+        
+        if (!mergedData[groupName]) {
+            mergedData[groupName] = [];
+        }
+        
+        newEntries.forEach(newEntry => {
+            // Check if this entry already exists
+            const isDuplicate = mergedData[groupName].some(existingEntry => 
+                areEntriesDuplicate(existingEntry, newEntry)
+            );
+            
+            if (!isDuplicate) {
+                mergedData[groupName].push(newEntry);
+                addedCount++;
+            } else {
+                skippedCount++;
+            }
+        });
+    });
+    
+    return { mergedData, addedCount, skippedCount };
+}
+
 // Handle file import
 // eslint-disable-next-line no-unused-vars
 function handleImportFile() {
@@ -1601,21 +1720,41 @@ function handleImportFile() {
             const text = await file.text();
             const newData = importDataFromCSV(text);
             
-            // Ask user for confirmation
             const entryCount = Object.values(newData).reduce((sum, entries) => sum + entries.length, 0);
             const groupCount = Object.keys(newData).length;
             
-            const confirmMsg = `This will import ${entryCount} entries across ${groupCount} groups and REPLACE all existing data. Continue?`;
+            // Ask user if they want to REPLACE or ADD
+            const importMode = confirm(
+                `Found ${entryCount} entries across ${groupCount} groups.\n\n` +
+                `Click OK to ADD to existing data (duplicates will be skipped)\n` +
+                `Click Cancel to REPLACE all existing data`
+            );
             
-            if (!confirm(confirmMsg)) {
-                showFeedback('Import cancelled', 'error');
-                return;
+            if (importMode) {
+                // ADD mode - merge with existing data
+                const existingData = StorageModule.getAll();
+                const { mergedData, addedCount, skippedCount } = mergeImportedData(existingData, newData);
+                
+                // Confirm before proceeding
+                const confirmMsg = `This will add ${addedCount} new entries. ${skippedCount} duplicate(s) will be skipped. Continue?`;
+                if (!confirm(confirmMsg)) {
+                    showFeedback('Import cancelled', 'error');
+                    return;
+                }
+                
+                StorageModule.importAll(mergedData);
+                showFeedback(`Successfully added ${addedCount} entries! (${skippedCount} duplicates skipped)`, 'success');
+            } else {
+                // REPLACE mode - replace all data
+                const confirmMsg = `This will REPLACE all existing data with ${entryCount} entries. Continue?`;
+                if (!confirm(confirmMsg)) {
+                    showFeedback('Import cancelled', 'error');
+                    return;
+                }
+                
+                StorageModule.importAll(newData);
+                showFeedback(`Successfully imported ${entryCount} entries!`, 'success');
             }
-            
-            // Import the data
-            StorageModule.importAll(newData);
-            
-            showFeedback(`Successfully imported ${entryCount} entries!`, 'success');
             
             // Refresh the data viewer
             refreshGroupList();
@@ -1627,4 +1766,19 @@ function handleImportFile() {
     };
     
     input.click();
+}
+
+// Toggle Data Management section
+// eslint-disable-next-line no-unused-vars
+function toggleDataManagement() {
+    const content = document.getElementById('dataManagementContent');
+    const toggle = document.getElementById('dataManagementToggle');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.textContent = '▼';
+    } else {
+        content.style.display = 'none';
+        toggle.textContent = '▶';
+    }
 }

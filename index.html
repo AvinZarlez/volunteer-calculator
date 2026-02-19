@@ -184,15 +184,20 @@
                     
                     <div id="dataViewerActions" class="viewer-actions" style="display: none;">
                         <button type="button" onclick="copyAllEntriesToClipboard()" class="btn-primary">📋 Copy All Entries to Spreadsheet</button>
+                        <button type="button" onclick="downloadGroupEntriesAsCSV()" class="btn-primary">💾 Download Entries as CSV File</button>
                     </div>
                     
                     <div class="data-management-actions">
-                        <h3>Data Management</h3>
-                        <div class="management-buttons">
-                            <button type="button" onclick="exportAllDataToCSV()" class="btn-primary">📥 Export All Data</button>
-                            <button type="button" onclick="handleImportFile()" class="btn-secondary">📤 Import Data</button>
+                        <h3 onclick="toggleDataManagement()" class="collapsible-header">
+                            <span id="dataManagementToggle" class="toggle-icon">▶</span> Data Management
+                        </h3>
+                        <div id="dataManagementContent" class="management-content" style="display: none;">
+                            <div class="management-buttons">
+                                <button type="button" onclick="exportAllDataToCSV()" class="btn-primary">📥 Export All Data</button>
+                                <button type="button" onclick="handleImportFile()" class="btn-secondary">📤 Import Data</button>
+                            </div>
+                            <p class="management-note"><strong>⚠️ Warning:</strong> Export creates a CSV file with all stored data. Import allows you to <strong>add to</strong> or <strong>replace all existing data</strong> with the CSV file contents.</p>
                         </div>
-                        <p class="management-note"><strong>⚠️ Warning:</strong> Export creates a CSV file with all stored data. Import <strong>replaces all existing data</strong> with the CSV file contents.</p>
                     </div>
                 </section>
             </div>

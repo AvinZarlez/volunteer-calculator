@@ -728,6 +728,27 @@ footer a:hover {
     font-size: 1.2rem;
 }
 
+.collapsible-header {
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0 !important;
+}
+
+.collapsible-header:hover {
+    color: #667eea;
+}
+
+.toggle-icon {
+    display: inline-block;
+    width: 20px;
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.management-content {
+    margin-top: 15px;
+}
+
 .management-buttons {
     display: flex;
     gap: 15px;
