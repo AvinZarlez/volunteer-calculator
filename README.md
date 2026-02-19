@@ -153,16 +153,16 @@ All tests and linting run automatically via GitHub Actions on every push and pul
 
 ## 📚 Documentation
 
-- **User Guide**: This README
-- **Technical Documentation Hub**: See [docs/README.md](docs/README.md) for comprehensive technical documentation
-  - [Architecture & File Structure](docs/architecture.md)
-  - [Core Components](docs/components.md)
-  - [Calculation Algorithms](docs/calculations.md)
-  - [Testing Strategy](docs/testing.md)
-  - [GitHub Pages Setup](docs/github-pages-setup.md)
-  - [Browser Compatibility](docs/browser-compatibility.md)
-  - [Customization Guide](docs/customization.md)
-- **Agent Instructions**: See [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md) for AI agent guidance
+- **User Guide**: This README (you are here)
+- **Technical Documentation**: For developers and contributors, see the [Documentation Hub](docs/README.md) which provides comprehensive technical documentation including:
+  - Architecture & File Structure
+  - Core Components
+  - Calculation Algorithms
+  - Testing Strategy
+  - GitHub Pages Setup
+  - Browser Compatibility
+  - Customization Guide
+- **AI Agent Instructions**: See [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md) for AI agent guidance
 
 ## 🛠️ Technology Stack
 

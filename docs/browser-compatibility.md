@@ -1,6 +1,6 @@
 # 🌐 Browser Compatibility
 
-[← Back to Documentation Hub](index.md)
+[← Back to Documentation Hub](README.md)
 
 This document outlines browser support, features used, and fallback strategies for the Volunteer Calculator.
 
@@ -304,4 +304,4 @@ if (isChrome) {
 
 ---
 
-[← Back to Documentation Hub](index.md) | [Next: Customization →](customization.md)
+[← Back to Documentation Hub](README.md) | [Next: Customization →](customization.md)

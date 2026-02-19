@@ -1,5 +1,7 @@
 # GitHub Pages Setup Guide
 
+[← Back to Documentation Hub](README.md)
+
 This guide explains how to enable GitHub Pages for the volunteer-calculator repository.
 
 ## Prerequisites

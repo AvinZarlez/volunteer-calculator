@@ -1,6 +1,6 @@
 # 💻 Core Components
 
-[← Back to Documentation Hub](index.md)
+[← Back to Documentation Hub](README.md)
 
 This document provides detailed documentation of the main application components: HTML structure, CSS styling, and JavaScript logic.
 
@@ -596,4 +596,4 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 
 ---
 
-[← Back to Documentation Hub](index.md) | [Next: Calculations →](calculations.md)
+[← Back to Documentation Hub](README.md) | [Next: Calculations →](calculations.md)

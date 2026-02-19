@@ -1,6 +1,6 @@
 # 🏗️ Architecture & File Structure
 
-[← Back to Documentation Hub](index.md)
+[← Back to Documentation Hub](README.md)
 
 ## Architecture Overview
 
@@ -375,4 +375,4 @@ git push origin main
 
 ---
 
-[← Back to Documentation Hub](index.md) | [Next: Components →](components.md)
+[← Back to Documentation Hub](README.md) | [Next: Components →](components.md)

@@ -1,5 +1,7 @@
 # 📚 Technical Documentation Hub
 
+[← Back to Main README](../README.md)
+
 Welcome to the Volunteer Calculator technical documentation! This hub provides comprehensive information for developers, contributors, and technical users who want to understand how the project works.
 
 ## 🎯 Purpose

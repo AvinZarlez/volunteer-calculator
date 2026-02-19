@@ -1,6 +1,6 @@
 # 🧮 Calculation Algorithms
 
-[← Back to Documentation Hub](index.md)
+[← Back to Documentation Hub](README.md)
 
 This document provides an in-depth explanation of all calculation formulas, algorithms, and data processing used in the Volunteer Calculator.
 
@@ -410,4 +410,4 @@ See [testing.md](testing.md) for complete test documentation.
 
 ---
 
-[← Back to Documentation Hub](index.md) | [Next: Testing →](testing.md)
+[← Back to Documentation Hub](README.md) | [Next: Testing →](testing.md)
