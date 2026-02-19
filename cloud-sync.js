@@ -300,9 +300,18 @@ const CloudSyncModule = (function() {
             'auth/weak-password': 'Password must be at least 6 characters.',
             'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
             'auth/network-request-failed': 'Network error. Please check your connection.',
-            'auth/invalid-credential': 'Invalid email or password.'
+            'auth/invalid-credential': 'Invalid email or password.',
+            'auth/operation-not-allowed': 'Email/password sign-in is not enabled. In the Firebase console go to Authentication → Sign-in method and enable the Email/Password provider.',
+            'auth/invalid-api-key': 'Invalid Firebase API key. Check your firebase-config.js values.',
+            'auth/app-not-authorized': 'This app is not authorized to use Firebase. Check your firebase-config.js authDomain.',
+            'auth/configuration-not-found': 'Firebase Authentication is not configured. Enable it in the Firebase console under Authentication → Get started.'
         };
-        return messages[code] || 'Authentication error. Please try again.';
+        const msg = messages[code];
+        if (msg) {
+            return msg;
+        }
+        console.error('Unhandled Firebase auth error code:', code);
+        return `Authentication error (${code}). Please check the browser console for details.`;
     }
 
     // ---- Modal helpers (called from inline HTML onclick handlers) ----
