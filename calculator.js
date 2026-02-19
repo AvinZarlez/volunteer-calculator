@@ -1400,15 +1400,18 @@ function generateAllEntriesTSV(entries) {
     let tsv = getTSVHeader();
     
     entries.forEach(entry => {
-        const formattedDate = formatTimestamp(entry.timestamp);
-        
-        // Format bag types
-        const bagTypesStr = formatBagTypes(entry.bagResults);
-        
-        tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${formatNumber(entry.durationHours)}\t${bagTypesStr}\t${formatNumber(entry.totalPounds)}\t${formatNumber(entry.poundsPerVolunteer)}\t${formatNumber(entry.poundsPerVolunteerPerHour)}\n`;
+        tsv += entryToTSVLine(entry) + '\n';
     });
     
     return tsv;
+}
+
+// Convert a single entry to TSV line (without header)
+function entryToTSVLine(entry) {
+    const formattedDate = formatTimestamp(entry.timestamp);
+    const bagTypesStr = formatBagTypes(entry.bagResults);
+    
+    return `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${formatNumber(entry.durationHours)}\t${bagTypesStr}\t${formatNumber(entry.totalPounds)}\t${formatNumber(entry.poundsPerVolunteer)}\t${formatNumber(entry.poundsPerVolunteerPerHour)}`;
 }
 
 // Copy to clipboard helper
@@ -1904,7 +1907,7 @@ function copySelectedEntries() {
     }
     
     const entries = getSelectedEntriesData();
-    const tsvData = getTSVHeader() + entries.map(entry => entryToTSV(entry)).join('\n');
+    const tsvData = getTSVHeader() + entries.map(entry => entryToTSVLine(entry)).join('\n');
     
     navigator.clipboard.writeText(tsvData).then(() => {
         showFeedback(`Copied ${selectedEntries.size} entries to clipboard`, 'success');
