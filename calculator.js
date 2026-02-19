@@ -133,15 +133,18 @@ function clearDataViewerUI() {
 }
 
 // Date Filter Functions
+function formatDateForInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // eslint-disable-next-line no-unused-vars
 function setToday(inputId) {
     const dateInput = document.getElementById(inputId);
     if (dateInput) {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        dateInput.value = `${year}-${month}-${day}`;
+        dateInput.value = formatDateForInput(new Date());
         
         // Trigger change event to reload data
         loadGroupData();
@@ -170,7 +173,7 @@ function getDateFilterRange() {
     case 'last-12-months': {
         // From 12 months ago to now
         startDate = new Date(now);
-        startDate.setFullYear(now.getFullYear() - 1);
+        startDate.setMonth(now.getMonth() - 12);
         endDate = now;
         break;
     }
@@ -181,13 +184,11 @@ function getDateFilterRange() {
         const endInput = document.getElementById('endDate').value;
         
         if (startInput) {
-            startDate = new Date(startInput);
-            startDate.setHours(0, 0, 0, 0);
+            startDate = new Date(startInput + 'T00:00:00');
         }
         
         if (endInput) {
-            endDate = new Date(endInput);
-            endDate.setHours(23, 59, 59, 999);
+            endDate = new Date(endInput + 'T23:59:59.999');
         }
         break;
     }
