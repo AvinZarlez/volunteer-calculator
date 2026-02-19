@@ -5,7 +5,8 @@
 const {
     convertToHours,
     calculateResults,
-    generateMarkdownTable
+    generateMarkdownTable,
+    StorageModule
 } = require('./calculator.js');
 
 // Simple test framework for Node.js
@@ -393,6 +394,277 @@ runner.describe('Input Validation Tests', (it) => {
         
         // Calculator doesn't trim - this should be done in the UI validation
         assertEquals(result.groupName, '  Test Group  ', 'Calculator should preserve input as-is');
+    });
+});
+
+// Test Suite 7: Storage Module Tests
+runner.describe('Storage Module Tests', (it) => {
+    // Mock localStorage for Node.js testing
+    const mockLocalStorage = {
+        data: {},
+        getItem: function(key) {
+            return this.data[key] || null;
+        },
+        setItem: function(key, value) {
+            this.data[key] = value;
+        },
+        removeItem: function(key) {
+            delete this.data[key];
+        },
+        clear: function() {
+            this.data = {};
+        }
+    };
+    
+    // Mock localStorage in global scope
+    global.localStorage = mockLocalStorage;
+    
+    it('should save a calculation result', () => {
+        // Clear storage first
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('Test Group', 10, 2, bags);
+        
+        const saved = StorageModule.save(result);
+        assertTrue(saved, 'Save should return true');
+        
+        const groups = StorageModule.getGroupNames();
+        assertTrue(groups.includes('Test Group'), 'Group should be in storage');
+    });
+    
+    it('should retrieve saved entries for a group', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result1 = calculateResults('Test Group', 10, 2, bags);
+        const result2 = calculateResults('Test Group', 15, 3, bags);
+        
+        StorageModule.save(result1);
+        StorageModule.save(result2);
+        
+        const entries = StorageModule.getGroup('Test Group');
+        assertEquals(entries.length, 2, 'Should have 2 entries');
+    });
+    
+    it('should delete a specific entry', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('Test Group', 10, 2, bags);
+        
+        StorageModule.save(result);
+        
+        const entries = StorageModule.getGroup('Test Group');
+        assertEquals(entries.length, 1, 'Should have 1 entry');
+        
+        const entryId = entries[0].id;
+        const deleted = StorageModule.deleteEntry('Test Group', entryId);
+        
+        assertTrue(deleted, 'Delete should return true');
+        
+        const remainingEntries = StorageModule.getGroup('Test Group');
+        assertEquals(remainingEntries.length, 0, 'Should have no entries after delete');
+    });
+    
+    it('should handle multiple groups', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result1 = calculateResults('Group A', 10, 2, bags);
+        const result2 = calculateResults('Group B', 15, 3, bags);
+        
+        StorageModule.save(result1);
+        StorageModule.save(result2);
+        
+        const groups = StorageModule.getGroupNames();
+        assertEquals(groups.length, 2, 'Should have 2 groups');
+        assertTrue(groups.includes('Group A'), 'Should have Group A');
+        assertTrue(groups.includes('Group B'), 'Should have Group B');
+    });
+    
+    it('should add timestamp to saved entries', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('Test Group', 10, 2, bags);
+        
+        StorageModule.save(result);
+        
+        const entries = StorageModule.getGroup('Test Group');
+        assertTrue(entries[0].timestamp !== undefined, 'Entry should have timestamp');
+    });
+    
+    it('should add unique ID to each entry', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('Test Group', 10, 2, bags);
+        
+        StorageModule.save(result);
+        StorageModule.save(result);
+        
+        const entries = StorageModule.getGroup('Test Group');
+        assertEquals(entries.length, 2, 'Should have 2 entries');
+        assertTrue(entries[0].id !== entries[1].id, 'IDs should be unique');
+    });
+    
+    it('should trim group names when saving and retrieving', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('  Test Group  ', 10, 2, bags);
+        
+        StorageModule.save(result);
+        
+        const entries = StorageModule.getGroup('Test Group');
+        assertEquals(entries.length, 1, 'Should find entry with trimmed name');
+    });
+    
+    it('should return empty array for non-existent group', () => {
+        StorageModule.clear();
+        
+        const entries = StorageModule.getGroup('Non Existent');
+        assertEquals(entries.length, 0, 'Should return empty array');
+    });
+    
+    it('should remove group when last entry is deleted', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('Test Group', 10, 2, bags);
+        
+        StorageModule.save(result);
+        
+        const entries = StorageModule.getGroup('Test Group');
+        const entryId = entries[0].id;
+        
+        StorageModule.deleteEntry('Test Group', entryId);
+        
+        const groups = StorageModule.getGroupNames();
+        assertEquals(groups.length, 0, 'Should have no groups after deleting last entry');
+    });
+    
+    it('should successfully delete entry with string ID', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result = calculateResults('Test Group', 10, 2, bags);
+        
+        StorageModule.save(result);
+        
+        const entriesBefore = StorageModule.getGroup('Test Group');
+        assertEquals(entriesBefore.length, 1, 'Should have 1 entry before delete');
+        
+        const entryId = entriesBefore[0].id;
+        assertTrue(typeof entryId === 'string', 'Entry ID should be a string');
+        
+        const deleted = StorageModule.deleteEntry('Test Group', entryId);
+        assertTrue(deleted, 'Delete should return true');
+        
+        const entriesAfter = StorageModule.getGroup('Test Group');
+        assertEquals(entriesAfter.length, 0, 'Should have 0 entries after delete');
+    });
+    
+    it('should delete correct entry when multiple entries exist', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50 }];
+        const result1 = calculateResults('Test Group', 10, 2, bags);
+        const result2 = calculateResults('Test Group', 15, 3, bags);
+        const result3 = calculateResults('Test Group', 20, 4, bags);
+        
+        StorageModule.save(result1);
+        StorageModule.save(result2);
+        StorageModule.save(result3);
+        
+        const entriesBefore = StorageModule.getGroup('Test Group');
+        assertEquals(entriesBefore.length, 3, 'Should have 3 entries before delete');
+        
+        const middleEntryId = entriesBefore[1].id;
+        StorageModule.deleteEntry('Test Group', middleEntryId);
+        
+        const entriesAfter = StorageModule.getGroup('Test Group');
+        assertEquals(entriesAfter.length, 2, 'Should have 2 entries after delete');
+        
+        // Verify the correct entry was deleted (middle one with 15 volunteers)
+        const remainingVolunteerCounts = entriesAfter.map(e => e.numVolunteers);
+        assertTrue(remainingVolunteerCounts.includes(10), 'First entry should remain');
+        assertTrue(remainingVolunteerCounts.includes(20), 'Third entry should remain');
+        assertTrue(!remainingVolunteerCounts.includes(15), 'Middle entry should be deleted');
+    });
+});
+
+// Markdown Generation Tests
+runner.describe('Markdown Generation Tests', (it) => {
+    it('should generate markdown for single group result', () => {
+        const bags = [
+            { count: 5, weight: 30, type: 'Dog' },
+            { count: 3, weight: 25, type: 'Cat' }
+        ];
+        const result = calculateResults('Test Group', 10, 2, bags);
+        
+        const markdown = generateMarkdownTable(result);
+        
+        assertTrue(markdown.includes('# Test Group - Volunteer Results'), 'Should include title');
+        assertTrue(markdown.includes('| Volunteer Group | Test Group |'), 'Should include group name');
+        assertTrue(markdown.includes('| Number of Volunteers | 10 |'), 'Should include volunteer count');
+        assertTrue(markdown.includes('Dog'), 'Should include dog type');
+        assertTrue(markdown.includes('Cat'), 'Should include cat type');
+        assertTrue(markdown.includes('Total Pet Food Processed'), 'Should include total');
+    });
+    
+    it('should generate markdown for multiple groups result', () => {
+        const bags = [{ count: 5, weight: 30, type: 'Dog' }];
+        const groups = [
+            { name: 'Alpha Team', volunteers: 10 },
+            { name: 'Beta Team', volunteers: 8 }
+        ];
+        
+        // Simulate multiple group result structure
+        const multiGroupResult = {
+            durationHours: 2,
+            bagResults: [{
+                bagType: 1,
+                count: 5,
+                weight: 30,
+                type: 'Dog',
+                total: 150
+            }],
+            groupResults: [
+                {
+                    groupName: 'Alpha Team',
+                    numVolunteers: 10,
+                    durationHours: 2,
+                    bagResults: [{ bagType: 1, count: 5, weight: 30, type: 'Dog', total: 150 }],
+                    totalPounds: 150,
+                    poundsPerVolunteer: 15,
+                    poundsPerVolunteerPerHour: 7.5
+                },
+                {
+                    groupName: 'Beta Team',
+                    numVolunteers: 8,
+                    durationHours: 2,
+                    bagResults: [{ bagType: 1, count: 5, weight: 30, type: 'Dog', total: 150 }],
+                    totalPounds: 150,
+                    poundsPerVolunteer: 18.75,
+                    poundsPerVolunteerPerHour: 9.375
+                }
+            ],
+            totalPounds: 150,
+            totalVolunteers: 18,
+            totalPoundsPerVolunteer: 8.33,
+            totalPoundsPerVolunteerPerHour: 4.17
+        };
+        
+        const markdown = generateMarkdownTable(multiGroupResult);
+        
+        assertTrue(markdown.includes('# Volunteer Results'), 'Should include generic title');
+        assertTrue(markdown.includes('## Per-Group Results'), 'Should include per-group section');
+        assertTrue(markdown.includes('Alpha Team'), 'Should include Alpha Team');
+        assertTrue(markdown.includes('Beta Team'), 'Should include Beta Team');
+        assertTrue(markdown.includes('## Combined Totals'), 'Should include combined totals');
+        assertTrue(markdown.includes('Total Volunteers | 18'), 'Should include total volunteers');
     });
 });
 

@@ -15,9 +15,14 @@ The Volunteer Calculator helps volunteer coordinators and team leaders track and
 
 - **Easy Input Form**: Enter volunteer group name, number of volunteers, and time spent
 - **Flexible Time Units**: Input time in either hours or minutes
+- **Animal Type Selection**: Choose Dog, Cat, or Other (with custom type option) for each bag type
 - **Dynamic Bag Types**: Add any number of bag types with different weights
 - **Instant Calculations**: Get immediate results with detailed breakdowns
+- **Persistent Storage**: Save calculation results to local browser storage
+- **Data Viewer**: View, manage, and delete saved entries by volunteer group
+- **Manual Save Option**: Choose when to save data with a dedicated Save Data button
 - **Markdown Export**: Copy results as a formatted markdown table for reports
+- **Spreadsheet Export**: Copy data in tab-separated format for Excel/Google Sheets
 - **Mobile Responsive**: Works seamlessly on desktop, tablet, and mobile devices
 - **No Installation Required**: Runs entirely in your web browser
 
@@ -30,16 +35,18 @@ Visit [https://avinzarlez.github.io/volunteer-calculator/](https://avinzarlez.gi
 ### Running Locally
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/AvinZarlez/volunteer-calculator.git
    cd volunteer-calculator
    ```
 
 2. Open `index.html` in your web browser, or use a local server:
+
    ```bash
    # Using Python 3
    python -m http.server 8000
-   
+
    # Using Node.js (with http-server package)
    npx http-server
    ```
@@ -57,35 +64,57 @@ Visit [https://avinzarlez.github.io/volunteer-calculator/](https://avinzarlez.gi
 ### Step 2: Enter Bag Data
 
 1. Start with the first bag type (pre-filled)
-2. Enter the **Number of Bags** processed
-3. Enter the **Pounds per Bag** weight
-4. Click **"+ Add Another Bag Type"** to add more bag types if needed
-5. Repeat for each different bag size your team processed
+2. Select the **Bag Type**: Choose Dog, Cat, or Other
+   - If you select "Other", you can specify a custom type (e.g., "Bird")
+   - Leaving the custom field blank will save as "Other"
+3. Enter the **Number of Bags** processed
+4. Enter the **Pounds per Bag** weight
+5. Click **"+ Add Another Bag Type"** to add more bag types if needed
+6. Repeat for each different bag size your team processed
 
-### Step 3: Calculate Results
+### Step 3: Calculate and Save Results
 
 1. Click the **"Calculate"** button
 2. View your results including:
-   - Pounds processed for each bag type
+   - Pounds processed for each bag type (with animal type)
    - Total pet food processed
    - Amount per volunteer
    - Amount per volunteer per hour
+3. Click the **"💾 Save Data"** button to save results to local storage (optional)
+   - Results are indexed by volunteer group name
+   - Saved results persist across browser sessions
 
-### Step 4: Export Results (Optional)
+### Step 4: View Saved Data
+
+1. Click the **"Data Viewer"** tab at the top
+2. Select a volunteer group from the dropdown
+3. View all saved entries with timestamps and bag type details
+4. Copy individual entries or all entries to clipboard for spreadsheet use
+5. Delete unwanted entries (requires two confirmations for safety)
+
+### Step 5: Export Results (Optional)
 
 Click **"📋 Copy Results as Markdown Table"** to copy a formatted table to your clipboard. Paste it into:
+
 - GitHub issues or pull requests
 - Markdown documents
 - Team reports
 - Email messages
 
+From the Data Viewer, you can also:
+
+- Copy individual entries in tab-separated format for spreadsheets
+- Copy all entries for a group at once
+
 ## 📊 Example Usage
 
 **Scenario**: A team of 8 volunteers worked for 2.5 hours and processed:
+
 - 20 bags of 25 lbs each
 - 15 bags of 50 lbs each
 
 **Results**:
+
 - Bag Type 1: 500 lbs
 - Bag Type 2: 750 lbs
 - Total: 1,250 lbs
@@ -114,6 +143,7 @@ npm run lint
 All tests and linting run automatically via GitHub Actions on every push and pull request. The CI pipeline ensures code quality and test coverage before merging.
 
 **Test Coverage:**
+
 - Time conversion (6 tests)
 - Calculations (6 tests)
 - Markdown generation (5 tests)
@@ -129,7 +159,7 @@ All tests and linting run automatically via GitHub Actions on every push and pul
   - [Core Components](docs/components.md)
   - [Calculation Algorithms](docs/calculations.md)
   - [Testing Strategy](docs/testing.md)
-  - [GitHub Pages Setup](docs/GITHUB_PAGES_SETUP.md)
+  - [GitHub Pages Setup](docs/github-pages-setup.md)
   - [Browser Compatibility](docs/browser-compatibility.md)
   - [Customization Guide](docs/customization.md)
 - **Agent Instructions**: See [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md) for AI agent guidance

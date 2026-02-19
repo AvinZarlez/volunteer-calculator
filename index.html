@@ -11,66 +11,155 @@
         <header>
             <h1>🐾 Volunteer Calculator</h1>
             <p class="subtitle">Calculate pet food packing volunteer effort</p>
+            
+            <nav class="view-nav">
+                <button id="navCalculator" class="nav-btn active">Calculator</button>
+                <button id="navDataViewer" class="nav-btn">Data Viewer</button>
+            </nav>
         </header>
 
         <main>
-            <form id="volunteerForm" class="calculator-form">
-                <section class="form-section">
-                    <h2>Volunteer Information</h2>
-                    
-                    <div class="form-group">
-                        <label for="groupName">Name of Volunteer Group:</label>
-                        <input type="text" id="groupName" name="groupName" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="numVolunteers">Number of Volunteers:</label>
-                        <input type="number" id="numVolunteers" name="numVolunteers" min="1" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="duration">Time Volunteered:</label>
-                        <div class="duration-input">
-                            <input type="number" id="duration" name="duration" min="0" step="0.01" required>
-                            <select id="timeUnit" name="timeUnit">
-                                <option value="hours">Hours</option>
-                                <option value="minutes">Minutes</option>
-                            </select>
+            <!-- Calculator View -->
+            <div id="calculatorView">
+                <form id="volunteerForm" class="calculator-form">
+                    <section class="form-section">
+                        <h2>Volunteer Information</h2>
+                        
+                        <div class="form-group">
+                            <label for="duration">Time Volunteered:</label>
+                            <div class="duration-input">
+                                <input type="number" id="duration" name="duration" min="0" step="0.01" required>
+                                <select id="timeUnit" name="timeUnit">
+                                    <option value="hours">Hours</option>
+                                    <option value="minutes">Minutes</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                <section class="form-section">
-                    <h2>Bags Processed</h2>
-                    <div id="bagsList">
-                        <div class="bag-entry" data-bag-index="0">
-                            <div class="bag-fields">
-                                <div class="form-group">
-                                    <label for="bagCount0">Number of Bags:</label>
-                                    <input type="number" class="bag-count" id="bagCount0" min="1" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="bagWeight0">Pounds per Bag:</label>
-                                    <input type="number" class="bag-weight" id="bagWeight0" min="0.01" step="0.01" required>
+                    <section class="form-section">
+                        <h2>Volunteer Groups</h2>
+                        <div id="groupsList">
+                            <div class="group-entry" data-group-index="0">
+                                <div class="group-fields">
+                                    <div class="form-group">
+                                        <label for="groupName0">Name of Volunteer Group:</label>
+                                        <input type="text" class="group-name" id="groupName0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="numVolunteers0">Number of Volunteers:</label>
+                                        <input type="number" class="num-volunteers" id="numVolunteers0" min="1" required>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <button type="button" id="addGroupBtn" class="btn-secondary">+ Add Another Volunteer Group</button>
+                    </section>
+
+                    <section class="form-section">
+                        <h2>Bags Processed</h2>
+                        <div id="bagsList">
+                            <div class="bag-entry" data-bag-index="0">
+                                <div class="bag-fields">
+                                    <div class="form-group">
+                                        <label for="bagCount0">Number of Bags:</label>
+                                        <input type="number" class="bag-count" id="bagCount0" min="1" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bagWeight0">Pounds per Bag:</label>
+                                        <input type="number" class="bag-weight" id="bagWeight0" min="0.01" step="0.01" required>
+                                    </div>
+                                    <div class="form-group bag-type-group">
+                                        <label>Bag Type:</label>
+                                        <div class="radio-group">
+                                            <label class="radio-label">
+                                                <input type="radio" name="bagType0" value="Dog" class="bag-type-radio" checked>
+                                                <span>Dog</span>
+                                            </label>
+                                            <label class="radio-label">
+                                                <input type="radio" name="bagType0" value="Cat" class="bag-type-radio">
+                                                <span>Cat</span>
+                                            </label>
+                                            <label class="radio-label">
+                                                <input type="radio" name="bagType0" value="Other" class="bag-type-radio">
+                                                <span>Other</span>
+                                            </label>
+                                        </div>
+                                        <input type="text" class="bag-type-other" id="bagTypeOther0" placeholder="Specify type (e.g., Bird)" style="display: none;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="addBagBtn" class="btn-secondary">+ Add Another Bag Type</button>
+                    </section>
+
+                    <div class="form-actions">
+                        <button type="submit" id="calculateBtn" class="btn-primary">Calculate</button>
+                        <button type="button" id="resetBtn" class="btn-secondary">Reset</button>
                     </div>
-                    <button type="button" id="addBagBtn" class="btn-secondary">+ Add Another Bag Type</button>
+                </form>
+
+                <section id="resultsSection" class="results-section" style="display: none;">
+                    <h2>Results</h2>
+                    <div id="resultsContent"></div>
+                    <div class="results-actions">
+                        <button type="button" id="copyBtn" class="btn-primary">📋 Copy Results as Markdown Table</button>
+                        <button type="button" id="copyEntriesBtn" class="btn-primary">📋 Copy Entries to Spreadsheet</button>
+                    </div>
+                    <div id="copyFeedback" class="copy-feedback" style="display: none;">Copied to clipboard!</div>
                 </section>
+            </div>
 
-                <div class="form-actions">
-                    <button type="submit" id="calculateBtn" class="btn-primary">Calculate</button>
-                    <button type="button" id="resetBtn" class="btn-secondary">Reset</button>
-                </div>
-            </form>
-
-            <section id="resultsSection" class="results-section" style="display: none;">
-                <h2>Results</h2>
-                <div id="resultsContent"></div>
-                <button type="button" id="copyBtn" class="btn-primary">📋 Copy Results as Markdown Table</button>
-                <div id="copyFeedback" class="copy-feedback" style="display: none;">Copied to clipboard!</div>
-            </section>
+            <!-- Data Viewer View -->
+            <div id="dataViewerView" style="display: none;">
+                <section class="data-viewer-section">
+                    <h2>📊 Data Viewer</h2>
+                    <p class="viewer-description">View and manage saved volunteer group entries</p>
+                    
+                    <div class="viewer-controls">
+                        <div class="form-group">
+                            <label for="groupSelect">Select Volunteer Group:</label>
+                            <div class="select-with-refresh">
+                                <select id="groupSelect" class="group-select">
+                                    <option value="">-- Select a volunteer group --</option>
+                                </select>
+                                <button id="refreshGroupsBtn" class="btn-refresh" title="Refresh group list">🔄</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="viewerFeedback" class="viewer-feedback" style="display: none;"></div>
+                    
+                    <div id="groupSummary" class="group-summary" style="display: none;"></div>
+                    
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date & Time</th>
+                                    <th>Volunteers</th>
+                                    <th>Hours</th>
+                                    <th>Bag Types</th>
+                                    <th>Total Pounds</th>
+                                    <th>Pounds/Volunteer</th>
+                                    <th>Pounds/Vol/Hour</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTableBody">
+                                <tr>
+                                    <td colspan="9" class="no-data">Select a volunteer group to view entries</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="dataViewerActions" class="viewer-actions" style="display: none;">
+                        <button type="button" onclick="copyAllEntriesToClipboard()" class="btn-primary">📋 Copy All Entries to Spreadsheet</button>
+                    </div>
+                </section>
+            </div>
         </main>
 
         <footer>

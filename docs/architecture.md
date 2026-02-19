@@ -62,7 +62,7 @@ volunteer-calculator/
 │   ├── components.md      # Component documentation
 │   ├── calculations.md    # Algorithm documentation
 │   ├── testing.md         # Testing guide
-│   ├── GITHUB_PAGES_SETUP.md # Deployment guide
+│   ├── github-pages-setup.md # Deployment guide
 │   ├── browser-compatibility.md # Browser support
 │   └── customization.md   # Customization guide
 │
@@ -82,26 +82,26 @@ volunteer-calculator/
 
 ### Frontend Technologies
 
-| Technology | Purpose | Why Chosen |
-|------------|---------|------------|
-| **HTML5** | Structure and semantic markup | Standard, accessible, widely supported |
-| **CSS3** | Styling with modern features | Grid, Flexbox, animations without frameworks |
-| **Vanilla JavaScript** | Core logic and interactivity | No dependencies, maximum compatibility |
+| Technology             | Purpose                       | Why Chosen                                   |
+| ---------------------- | ----------------------------- | -------------------------------------------- |
+| **HTML5**              | Structure and semantic markup | Standard, accessible, widely supported       |
+| **CSS3**               | Styling with modern features  | Grid, Flexbox, animations without frameworks |
+| **Vanilla JavaScript** | Core logic and interactivity  | No dependencies, maximum compatibility       |
 
 ### Development Tools
 
-| Tool | Purpose | Configuration File |
-|------|---------|-------------------|
-| **ESLint** | Code quality and style checking | `.eslintrc.json` |
-| **Node.js** | Test execution environment | `package.json` |
-| **npm** | Package management | `package.json` |
+| Tool        | Purpose                         | Configuration File |
+| ----------- | ------------------------------- | ------------------ |
+| **ESLint**  | Code quality and style checking | `.eslintrc.json`   |
+| **Node.js** | Test execution environment      | `package.json`     |
+| **npm**     | Package management              | `package.json`     |
 
 ### Deployment & CI/CD
 
-| Service | Purpose | Configuration |
-|---------|---------|---------------|
-| **GitHub Pages** | Static site hosting | `.github/workflows/deploy.yml` |
-| **GitHub Actions** | Automated testing and deployment | `.github/workflows/ci.yml` |
+| Service            | Purpose                          | Configuration                  |
+| ------------------ | -------------------------------- | ------------------------------ |
+| **GitHub Pages**   | Static site hosting              | `.github/workflows/deploy.yml` |
+| **GitHub Actions** | Automated testing and deployment | `.github/workflows/ci.yml`     |
 
 ## Data Flow Architecture
 
@@ -131,11 +131,12 @@ The application uses minimal state management:
 
 ```javascript
 // Global state variables
-let bagCounter = 1;  // Tracks the next bag entry ID
-window.calculationResults = null;  // Stores the last calculation results
+let bagCounter = 1; // Tracks the next bag entry ID
+window.calculationResults = null; // Stores the last calculation results
 ```
 
 **State Flow:**
+
 - `bagCounter` increments when adding new bag entries
 - `calculationResults` is set when calculations complete
 - `calculationResults` is cleared on form reset
@@ -171,11 +172,13 @@ Remove Bag Button Click
 ## Scalability Considerations
 
 ### Current Limitations
+
 - Client-side only (no server or database)
 - No data persistence between sessions
 - Limited to single calculation at a time
 
 ### Designed for Scale
+
 - Dynamic bag entry creation (supports unlimited bag types)
 - Efficient DOM manipulation (only updates when needed)
 - No memory leaks (proper event cleanup)
@@ -184,11 +187,13 @@ Remove Bag Button Click
 ### If Scaling is Needed
 
 **For more users:**
+
 - Already scalable via GitHub Pages CDN
 - Static files cached by browsers
 - No server load (all client-side)
 
 **For more features:**
+
 - Easy to extend with new calculations
 - Modular function design
 - Clear separation of concerns
@@ -226,16 +231,19 @@ if (!groupName || groupName.trim() === '') {
 ## Performance Metrics
 
 ### Load Performance
+
 - **Initial Load**: ~16KB total (HTML + CSS + JS)
 - **Time to Interactive**: < 100ms on modern devices
 - **No Render-Blocking**: All resources load efficiently
 
 ### Runtime Performance
+
 - **Calculation Speed**: < 1ms for typical inputs
 - **DOM Updates**: Only results section (minimal reflow)
 - **Memory Usage**: < 2MB total
 
 ### Optimization Techniques
+
 1. Minimal DOM manipulation
 2. CSS animations (hardware accelerated)
 3. Event delegation where possible
@@ -245,6 +253,7 @@ if (!groupName || groupName.trim() === '') {
 ## Development Workflow
 
 ### Local Development
+
 ```bash
 # Clone repository
 git clone https://github.com/AvinZarlez/volunteer-calculator.git
@@ -260,6 +269,7 @@ npx http-server
 ```
 
 ### Testing Workflow
+
 ```bash
 # Install dependencies
 npm install
@@ -272,6 +282,7 @@ npm test
 ```
 
 ### Deployment Workflow
+
 ```bash
 # Push to main branch
 git push origin main
@@ -287,6 +298,7 @@ git push origin main
 ### Why Vanilla JavaScript?
 
 **Pros:**
+
 - No build step required
 - No dependency management
 - Maximum browser compatibility
@@ -294,6 +306,7 @@ git push origin main
 - Easier for contributors to understand
 
 **Cons:**
+
 - More verbose code
 - No component framework benefits
 - Manual state management
@@ -303,6 +316,7 @@ git push origin main
 ### Why GitHub Pages?
 
 **Pros:**
+
 - Free hosting
 - Automatic HTTPS
 - CDN distribution
@@ -310,6 +324,7 @@ git push origin main
 - Version control integration
 
 **Cons:**
+
 - Static only (no backend)
 - Public repositories only (for free tier)
 
@@ -318,6 +333,7 @@ git push origin main
 ### Why No Database?
 
 **Pros:**
+
 - Simpler architecture
 - No maintenance
 - No costs
@@ -325,6 +341,7 @@ git push origin main
 - Faster performance
 
 **Cons:**
+
 - No data persistence
 - No history tracking
 - No user accounts
