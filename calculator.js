@@ -1349,7 +1349,11 @@ function downloadGroupEntriesAsCSV() {
         const url = URL.createObjectURL(blob);
         
         // Use group name in filename, sanitize it
-        const sanitizedGroupName = selectedGroup.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+        const sanitizedGroupName = selectedGroup
+            .replace(/[^a-z0-9]/gi, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+            .toLowerCase();
         const filename = `${sanitizedGroupName}-entries-${new Date().toISOString().split('T')[0]}.csv`;
         
         link.setAttribute('href', url);
@@ -1724,13 +1728,13 @@ function handleImportFile() {
             const groupCount = Object.keys(newData).length;
             
             // Ask user if they want to REPLACE or ADD
-            const importMode = confirm(
+            const isAddMode = confirm(
                 `Found ${entryCount} entries across ${groupCount} groups.\n\n` +
                 `Click OK to ADD to existing data (duplicates will be skipped)\n` +
                 `Click Cancel to REPLACE all existing data`
             );
             
-            if (importMode) {
+            if (isAddMode) {
                 // ADD mode - merge with existing data
                 const existingData = StorageModule.getAll();
                 const { mergedData, addedCount, skippedCount } = mergeImportedData(existingData, newData);
