@@ -73,6 +73,21 @@ Step-by-step guide for deploying the application to GitHub Pages.
 - Troubleshooting common issues
 - Custom domain setup
 
+### ☁️ [Cloud Sync Setup](cloud-sync-setup.md)
+
+Step-by-step guide for enabling cross-device cloud sync via Firebase.
+
+**Topics covered:**
+
+- How cloud sync works and what it requires
+- Creating a Firebase project and registering a web app
+- Enabling Email/Password authentication
+- Creating a Firestore database and setting security rules
+- Adding your Firebase config to the repository
+- Using the sync feature (sign in, auto-sync, manual refresh, sign out)
+- Troubleshooting common errors
+- Firebase free tier limits
+
 ### 🌐 [Browser Compatibility](browser-compatibility.md)
 
 Information about supported browsers, features used, and fallback strategies.
@@ -128,6 +143,6 @@ This project is licensed under the MIT License - see the [LICENSE](../LICENSE) f
 
 ---
 
-**Last Updated**: 2026-02-18
+**Last Updated**: 2026-02-19
 
 _This documentation is maintained alongside the code. If you notice outdated information, please submit a PR or open an issue._
