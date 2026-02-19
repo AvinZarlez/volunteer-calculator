@@ -107,6 +107,7 @@ function initializeEventListeners() {
     document.getElementById('addGroupBtn').addEventListener('click', addGroupEntry);
     document.getElementById('resetBtn').addEventListener('click', resetForm);
     document.getElementById('copyBtn').addEventListener('click', copyResultsToClipboard);
+    document.getElementById('copyEntriesBtn').addEventListener('click', copyEntriesToSpreadsheet);
     
     // Setup bag type listeners for initial bag (index 0)
     setupBagTypeListeners(0);
@@ -766,6 +767,75 @@ async function copyResultsToClipboard() {
         // Fallback for older browsers
         const textArea = document.createElement('textarea');
         textArea.value = markdown;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            showCopyFeedback();
+        } catch (err) {
+            alert('Failed to copy to clipboard. Please try again.');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+}
+
+// Copy entries to spreadsheet (TSV format)
+async function copyEntriesToSpreadsheet() {
+    if (!window.calculationResults) {
+        alert('Please calculate results first.');
+        return;
+    }
+    
+    const results = window.calculationResults;
+    let tsvData = '';
+    
+    // Check if this is multiple groups or single group
+    if (results.groupResults && results.groupResults.length > 0) {
+        // Multiple groups - copy all group entries
+        tsvData = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+        
+        results.groupResults.forEach(groupResult => {
+            const date = new Date();
+            const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            
+            // Format bag types
+            let bagTypesStr = '';
+            if (groupResult.bagResults && groupResult.bagResults.length > 0) {
+                bagTypesStr = groupResult.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
+            } else {
+                bagTypesStr = 'N/A';
+            }
+            
+            tsvData += `${groupResult.groupName}\t${formattedDate}\t${groupResult.numVolunteers}\t${groupResult.durationHours.toFixed(2)}\t${bagTypesStr}\t${groupResult.totalPounds.toFixed(2)}\t${groupResult.poundsPerVolunteer.toFixed(2)}\t${groupResult.poundsPerVolunteerPerHour.toFixed(2)}\n`;
+        });
+    } else {
+        // Single group - copy as one entry
+        const date = new Date();
+        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        
+        // Format bag types
+        let bagTypesStr = '';
+        if (results.bagResults && results.bagResults.length > 0) {
+            bagTypesStr = results.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
+        } else {
+            bagTypesStr = 'N/A';
+        }
+        
+        tsvData = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+        tsvData += `${results.groupName}\t${formattedDate}\t${results.numVolunteers}\t${results.durationHours.toFixed(2)}\t${bagTypesStr}\t${results.totalPounds.toFixed(2)}\t${results.poundsPerVolunteer.toFixed(2)}\t${results.poundsPerVolunteerPerHour.toFixed(2)}`;
+    }
+    
+    try {
+        await navigator.clipboard.writeText(tsvData);
+        showCopyFeedback();
+    } catch (err) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = tsvData;
         textArea.style.position = 'fixed';
         textArea.style.opacity = '0';
         document.body.appendChild(textArea);

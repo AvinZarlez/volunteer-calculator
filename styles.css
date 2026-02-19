@@ -279,6 +279,18 @@ main {
     margin-bottom: 20px;
 }
 
+.results-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.results-actions button {
+    flex: 1;
+    min-width: 200px;
+}
+
 .result-group {
     margin-bottom: 25px;
 }
