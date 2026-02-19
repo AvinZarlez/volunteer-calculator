@@ -94,6 +94,17 @@ const StorageModule = {
     // Clear all data (for testing)
     clear: function() {
         localStorage.removeItem(STORAGE_KEY);
+    },
+    
+    // Import all data (replaces existing data)
+    importAll: function(data) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            return true;
+        } catch (e) {
+            console.error('Failed to import data to localStorage:', e);
+            return false;
+        }
     }
 };
 
@@ -991,7 +1002,12 @@ if (typeof module !== 'undefined' && module.exports) {
         convertToHours,
         calculateResults,
         generateMarkdownTable,
-        StorageModule
+        StorageModule,
+        generateAllDataCSV,
+        importDataFromCSV,
+        parseCSVLine,
+        entryToCSVLine,
+        getCSVHeader
     };
 }
 
@@ -1333,4 +1349,279 @@ function showFeedback(message, type) {
     setTimeout(() => {
         feedbackDiv.style.display = 'none';
     }, 3000);
+}
+
+// CSV Export and Import Functions
+
+// Convert TSV header to CSV header
+function getCSVHeader() {
+    return 'Group Name,Date,Volunteers,Hours,Bag Types,Total Pounds,Pounds per Volunteer,Pounds per Volunteer per Hour';
+}
+
+// Generate CSV for all entries in storage
+function generateAllDataCSV() {
+    const allData = StorageModule.getAll();
+    let csv = getCSVHeader() + '\n';
+    
+    // Iterate through all groups and their entries
+    Object.keys(allData).sort().forEach(groupName => {
+        const entries = allData[groupName];
+        entries.forEach(entry => {
+            csv += entryToCSVLine(entry);
+        });
+    });
+    
+    return csv;
+}
+
+// Convert a single entry to a CSV line
+function entryToCSVLine(entry) {
+    const formattedDate = formatTimestamp(entry.timestamp);
+    const bagTypesStr = formatBagTypes(entry.bagResults);
+    
+    // Escape CSV fields that contain commas or quotes
+    const escapeCSV = (field) => {
+        const str = String(field);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+    };
+    
+    return `${escapeCSV(entry.groupName)},${escapeCSV(formattedDate)},${entry.numVolunteers},${formatNumber(entry.durationHours)},${escapeCSV(bagTypesStr)},${formatNumber(entry.totalPounds)},${formatNumber(entry.poundsPerVolunteer)},${formatNumber(entry.poundsPerVolunteerPerHour)}\n`;
+}
+
+// Export all data to CSV file
+// eslint-disable-next-line no-unused-vars
+function exportAllDataToCSV() {
+    try {
+        const csv = generateAllDataCSV();
+        
+        // Create a blob and download link
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `volunteer-calculator-data-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showFeedback('Data exported successfully!', 'success');
+    } catch (err) {
+        console.error('Export failed:', err);
+        showFeedback('Failed to export data', 'error');
+    }
+}
+
+// Parse CSV line respecting quoted fields
+function parseCSVLine(line) {
+    const fields = [];
+    let currentField = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+        
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                // Escaped quote
+                currentField += '"';
+                i++; // Skip next quote
+            } else {
+                // Toggle quote mode
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            // Field separator
+            fields.push(currentField);
+            currentField = '';
+        } else {
+            currentField += char;
+        }
+    }
+    
+    // Add the last field
+    fields.push(currentField);
+    
+    return fields;
+}
+
+// Parse bag types string back to bag results array
+function parseBagTypes(bagTypesStr) {
+    if (!bagTypesStr || bagTypesStr === 'N/A') {
+        return [];
+    }
+    
+    // Format is like: "Dog (5), Cat (3)"
+    const bagResults = [];
+    const parts = bagTypesStr.split(',').map(s => s.trim());
+    
+    parts.forEach((part, index) => {
+        const match = part.match(/^(.+?)\s*\((\d+)\)$/);
+        if (match) {
+            const type = match[1].trim();
+            const count = parseInt(match[2], 10);
+            // We don't have the original weight, so we'll approximate from total
+            bagResults.push({
+                bagType: index + 1,
+                type: type,
+                count: count,
+                weight: 0, // Will be recalculated if needed
+                total: 0
+            });
+        }
+    });
+    
+    return bagResults;
+}
+
+// Validate and import CSV data
+function importDataFromCSV(csvContent) {
+    const lines = csvContent.split('\n').filter(line => line.trim() !== '');
+    
+    if (lines.length === 0) {
+        throw new Error('CSV file is empty');
+    }
+    
+    // Validate header
+    const header = lines[0];
+    const expectedHeader = getCSVHeader();
+    
+    if (header.trim() !== expectedHeader.trim()) {
+        throw new Error('Invalid CSV header format. Expected: ' + expectedHeader);
+    }
+    
+    // Parse data lines
+    const newData = {};
+    const errors = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        try {
+            const fields = parseCSVLine(lines[i]);
+            
+            if (fields.length !== 8) {
+                errors.push(`Line ${i + 1}: Expected 8 fields, got ${fields.length}`);
+                continue;
+            }
+            
+            const groupName = fields[0].trim();
+            const dateStr = fields[1].trim();
+            const numVolunteers = parseFloat(fields[2]);
+            const durationHours = parseFloat(fields[3]);
+            const bagTypesStr = fields[4].trim();
+            const totalPounds = parseFloat(fields[5]);
+            const poundsPerVolunteer = parseFloat(fields[6]);
+            const poundsPerVolunteerPerHour = parseFloat(fields[7]);
+            
+            // Validate required fields
+            if (!groupName) {
+                errors.push(`Line ${i + 1}: Group name is required`);
+                continue;
+            }
+            
+            if (isNaN(numVolunteers) || numVolunteers <= 0) {
+                errors.push(`Line ${i + 1}: Invalid number of volunteers`);
+                continue;
+            }
+            
+            if (isNaN(durationHours) || durationHours <= 0) {
+                errors.push(`Line ${i + 1}: Invalid duration hours`);
+                continue;
+            }
+            
+            if (isNaN(totalPounds) || totalPounds < 0) {
+                errors.push(`Line ${i + 1}: Invalid total pounds`);
+                continue;
+            }
+            
+            // Parse date - try to preserve original timestamp or create new one
+            let timestamp;
+            try {
+                timestamp = new Date(dateStr).toISOString();
+            } catch (e) {
+                timestamp = new Date().toISOString();
+            }
+            
+            // Create entry object
+            const entry = {
+                groupName: groupName,
+                numVolunteers: numVolunteers,
+                durationHours: durationHours,
+                bagResults: parseBagTypes(bagTypesStr),
+                totalPounds: totalPounds,
+                poundsPerVolunteer: poundsPerVolunteer,
+                poundsPerVolunteerPerHour: poundsPerVolunteerPerHour,
+                timestamp: timestamp,
+                id: Date.now() + '-' + Math.random() + '-' + i
+            };
+            
+            // Add to data structure
+            const trimmedGroupName = trimGroupName(groupName);
+            if (!newData[trimmedGroupName]) {
+                newData[trimmedGroupName] = [];
+            }
+            newData[trimmedGroupName].push(entry);
+            
+        } catch (err) {
+            errors.push(`Line ${i + 1}: ${err.message}`);
+        }
+    }
+    
+    if (errors.length > 0) {
+        throw new Error('Import errors:\n' + errors.join('\n'));
+    }
+    
+    if (Object.keys(newData).length === 0) {
+        throw new Error('No valid data found in CSV file');
+    }
+    
+    return newData;
+}
+
+// Handle file import
+// eslint-disable-next-line no-unused-vars
+function handleImportFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+            const text = await file.text();
+            const newData = importDataFromCSV(text);
+            
+            // Ask user for confirmation
+            const entryCount = Object.values(newData).reduce((sum, entries) => sum + entries.length, 0);
+            const groupCount = Object.keys(newData).length;
+            
+            const confirmMsg = `This will import ${entryCount} entries across ${groupCount} groups and REPLACE all existing data. Continue?`;
+            
+            if (!confirm(confirmMsg)) {
+                showFeedback('Import cancelled', 'error');
+                return;
+            }
+            
+            // Import the data
+            StorageModule.importAll(newData);
+            
+            showFeedback(`Successfully imported ${entryCount} entries!`, 'success');
+            
+            // Refresh the data viewer
+            refreshGroupList();
+            
+        } catch (err) {
+            console.error('Import failed:', err);
+            showFeedback('Import failed: ' + err.message, 'error');
+        }
+    };
+    
+    input.click();
 }

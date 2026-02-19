@@ -711,3 +711,43 @@ footer a:hover {
         flex-direction: column;
     }
 }
+
+
+/* Data Management Actions */
+.data-management-actions {
+    margin-top: 40px;
+    padding: 25px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+}
+
+.data-management-actions h3 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.management-buttons {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.management-note {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+    .management-buttons {
+        flex-direction: column;
+    }
+    
+    .management-buttons button {
+        width: 100%;
+    }
+}

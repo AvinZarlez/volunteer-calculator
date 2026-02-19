@@ -185,6 +185,15 @@
                     <div id="dataViewerActions" class="viewer-actions" style="display: none;">
                         <button type="button" onclick="copyAllEntriesToClipboard()" class="btn-primary">📋 Copy All Entries to Spreadsheet</button>
                     </div>
+                    
+                    <div class="data-management-actions">
+                        <h3>Data Management</h3>
+                        <div class="management-buttons">
+                            <button type="button" onclick="exportAllDataToCSV()" class="btn-primary">📥 Export All Data</button>
+                            <button type="button" onclick="handleImportFile()" class="btn-secondary">📤 Import Data</button>
+                        </div>
+                        <p class="management-note">Export creates a CSV file with all stored data. Import replaces all existing data with the CSV file contents.</p>
+                    </div>
                 </section>
             </div>
         </main>
