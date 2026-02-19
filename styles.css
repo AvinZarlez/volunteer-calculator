@@ -711,3 +711,179 @@ footer a:hover {
         flex-direction: column;
     }
 }
+
+
+/* Data Management Actions */
+.data-management-actions {
+    margin-top: 40px;
+    padding: 25px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+}
+
+.data-management-actions h3 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.collapsible-header {
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0 !important;
+}
+
+.collapsible-header:hover {
+    color: #667eea;
+}
+
+.toggle-icon {
+    display: inline-block;
+    width: 20px;
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.management-content {
+    margin-top: 15px;
+}
+
+.management-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.management-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.management-section h4 {
+    color: #495057;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.btn-export {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+    font-weight: 500;
+}
+
+.btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.import-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 12px;
+}
+
+.btn-import-add,
+.btn-import-replace {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 8px;
+    border: 2px solid;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    font-family: inherit;
+}
+
+.btn-import-add {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.btn-import-add:hover {
+    background: #28a745;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-import-replace {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.btn-import-replace:hover {
+    background: #dc3545;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+}
+
+.btn-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.btn-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.btn-text strong {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.btn-text small {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.section-note {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 8px 0 0 0;
+    line-height: 1.5;
+}
+
+.management-buttons {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.management-note {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+    .management-buttons {
+        flex-direction: column;
+    }
+    
+    .management-buttons button {
+        width: 100%;
+    }
+    
+    .import-buttons {
+        grid-template-columns: 1fr;
+    }
+}

@@ -6,7 +6,17 @@ const {
     convertToHours,
     calculateResults,
     generateMarkdownTable,
-    StorageModule
+    StorageModule,
+    generateAllDataCSV,
+    importDataFromCSV,
+    parseCSVLine,
+    entryToCSVLine,
+    getCSVHeader,
+    getTSVHeader,
+    HEADER_FIELDS,
+    areEntriesDuplicate,
+    mergeImportedData,
+    generateGroupEntriesCSV
 } = require('./calculator.js');
 
 // Simple test framework for Node.js
@@ -665,6 +675,362 @@ runner.describe('Markdown Generation Tests', (it) => {
         assertTrue(markdown.includes('Beta Team'), 'Should include Beta Team');
         assertTrue(markdown.includes('## Combined Totals'), 'Should include combined totals');
         assertTrue(markdown.includes('Total Volunteers | 18'), 'Should include total volunteers');
+    });
+});
+
+// Test Suite 8: CSV Export and Import Tests
+runner.describe('CSV Export and Import Tests', (it) => {
+    // Mock localStorage for Node.js testing
+    const mockLocalStorage = {
+        data: {},
+        getItem: function(key) {
+            return this.data[key] || null;
+        },
+        setItem: function(key, value) {
+            this.data[key] = value;
+        },
+        removeItem: function(key) {
+            delete this.data[key];
+        },
+        clear: function() {
+            this.data = {};
+        }
+    };
+    
+    // Mock localStorage in global scope
+    global.localStorage = mockLocalStorage;
+    
+    it('should have unified header fields', () => {
+        assertEquals(HEADER_FIELDS.length, 8, 'Should have 8 header fields');
+        assertEquals(HEADER_FIELDS[0], 'Group Name', 'First field should be Group Name');
+        assertEquals(HEADER_FIELDS[7], 'Pounds per Volunteer per Hour', 'Last field should be Pounds per Volunteer per Hour');
+    });
+    
+    it('should generate TSV header from unified fields', () => {
+        const tsvHeader = getTSVHeader();
+        assertTrue(tsvHeader.includes('\t'), 'TSV header should contain tabs');
+        assertTrue(tsvHeader.endsWith('\n'), 'TSV header should end with newline');
+        assertEquals(tsvHeader.split('\t').length, 8, 'TSV header should have 8 tab-separated fields');
+    });
+    
+    it('should generate CSV header from unified fields', () => {
+        const csvHeader = getCSVHeader();
+        assertTrue(csvHeader.includes(','), 'CSV header should contain commas');
+        assertTrue(!csvHeader.includes('\n'), 'CSV header should not contain newline');
+        assertEquals(csvHeader.split(',').length, 8, 'CSV header should have 8 comma-separated fields');
+    });
+    
+    it('should generate correct CSV header', () => {
+        const header = getCSVHeader();
+        assertEquals(header, 'Group Name,Date,Volunteers,Hours,Bag Types,Total Pounds,Pounds per Volunteer,Pounds per Volunteer per Hour', 'CSV header should match expected format');
+    });
+    
+    it('should parse simple CSV line correctly', () => {
+        const line = 'Test Group,1/1/2024 12:00:00 PM,10,2.00,Dog (5),250.00,25.00,12.50';
+        const fields = parseCSVLine(line);
+        
+        assertEquals(fields.length, 8, 'Should parse 8 fields');
+        assertEquals(fields[0], 'Test Group', 'Group name should match');
+        assertEquals(fields[2], '10', 'Volunteers should match');
+    });
+    
+    it('should parse CSV line with quoted fields containing commas', () => {
+        const line = '"Group, Inc.",1/1/2024 12:00:00 PM,10,2.00,"Dog (5), Cat (3)",250.00,25.00,12.50';
+        const fields = parseCSVLine(line);
+        
+        assertEquals(fields.length, 8, 'Should parse 8 fields');
+        assertEquals(fields[0], 'Group, Inc.', 'Should handle commas in quotes');
+        assertEquals(fields[4], 'Dog (5), Cat (3)', 'Should handle multiple values in quotes');
+    });
+    
+    it('should parse CSV line with escaped quotes', () => {
+        const line = '"Group ""Special""",1/1/2024 12:00:00 PM,10,2.00,Dog (5),250.00,25.00,12.50';
+        const fields = parseCSVLine(line);
+        
+        assertEquals(fields[0], 'Group "Special"', 'Should handle escaped quotes');
+    });
+    
+    it('should convert entry to CSV line correctly', () => {
+        const entry = {
+            groupName: 'Test Group',
+            timestamp: '2024-01-01T12:00:00.000Z',
+            numVolunteers: 10,
+            durationHours: 2.5,
+            bagResults: [{ type: 'Dog', count: 5 }],
+            totalPounds: 250,
+            poundsPerVolunteer: 25,
+            poundsPerVolunteerPerHour: 10
+        };
+        
+        const csvLine = entryToCSVLine(entry);
+        
+        assertTrue(csvLine.includes('Test Group'), 'Should include group name');
+        assertTrue(csvLine.includes('10'), 'Should include volunteers');
+        assertTrue(csvLine.includes('2.50'), 'Should include hours with 2 decimals');
+        assertTrue(csvLine.includes('Dog (5)'), 'Should include bag types');
+    });
+    
+    it('should escape CSV fields with commas', () => {
+        const entry = {
+            groupName: 'Group, Inc.',
+            timestamp: '2024-01-01T12:00:00.000Z',
+            numVolunteers: 10,
+            durationHours: 2,
+            bagResults: [{ type: 'Dog', count: 5 }, { type: 'Cat', count: 3 }],
+            totalPounds: 250,
+            poundsPerVolunteer: 25,
+            poundsPerVolunteerPerHour: 12.5
+        };
+        
+        const csvLine = entryToCSVLine(entry);
+        
+        assertTrue(csvLine.includes('"Group, Inc."'), 'Should quote field with comma');
+        assertTrue(csvLine.includes('"Dog (5), Cat (3)"'), 'Should quote bag types with comma');
+    });
+    
+    it('should generate CSV for all data in storage', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50, type: 'Dog' }];
+        const result1 = calculateResults('Group A', 10, 2, bags);
+        const result2 = calculateResults('Group B', 8, 1.5, bags);
+        
+        StorageModule.save(result1);
+        StorageModule.save(result2);
+        
+        const csv = generateAllDataCSV();
+        
+        assertTrue(csv.includes(getCSVHeader()), 'CSV should include header');
+        assertTrue(csv.includes('Group A'), 'CSV should include Group A');
+        assertTrue(csv.includes('Group B'), 'CSV should include Group B');
+        
+        const lines = csv.split('\n').filter(l => l.trim() !== '');
+        assertEquals(lines.length, 3, 'Should have header + 2 data lines');
+    });
+    
+    it('should import valid CSV data', () => {
+        const csv = `Group Name,Date,Volunteers,Hours,Bag Types,Total Pounds,Pounds per Volunteer,Pounds per Volunteer per Hour
+Test Group,1/1/2024 12:00:00 PM,10,2.00,Dog (5),250.00,25.00,12.50
+Another Group,1/2/2024 1:00:00 PM,8,1.50,Cat (3),120.00,15.00,10.00`;
+        
+        const data = importDataFromCSV(csv);
+        
+        assertTrue(data['Test Group'] !== undefined, 'Should have Test Group');
+        assertTrue(data['Another Group'] !== undefined, 'Should have Another Group');
+        assertEquals(data['Test Group'].length, 1, 'Test Group should have 1 entry');
+        assertEquals(data['Another Group'].length, 1, 'Another Group should have 1 entry');
+        
+        const entry = data['Test Group'][0];
+        assertEquals(entry.groupName, 'Test Group', 'Group name should match');
+        assertEquals(entry.numVolunteers, 10, 'Volunteers should match');
+        assertEquals(entry.durationHours, 2, 'Hours should match');
+        assertEquals(entry.totalPounds, 250, 'Total pounds should match');
+    });
+    
+    it('should reject CSV with invalid header', () => {
+        const csv = `Wrong,Header,Format
+Test Group,1/1/2024,10,2.00,Dog (5),250.00,25.00,12.50`;
+        
+        try {
+            importDataFromCSV(csv);
+            throw new Error('Should have thrown an error');
+        } catch (err) {
+            assertTrue(err.message.includes('Invalid CSV header'), 'Should report invalid header');
+        }
+    });
+    
+    it('should reject CSV with empty content', () => {
+        const csv = '';
+        
+        try {
+            importDataFromCSV(csv);
+            throw new Error('Should have thrown an error');
+        } catch (err) {
+            assertTrue(err.message.includes('empty'), 'Should report empty file');
+        }
+    });
+    
+    it('should reject CSV with invalid number of fields', () => {
+        const csv = `Group Name,Date,Volunteers,Hours,Bag Types,Total Pounds,Pounds per Volunteer,Pounds per Volunteer per Hour
+Test Group,1/1/2024,10`;
+        
+        try {
+            importDataFromCSV(csv);
+            throw new Error('Should have thrown an error');
+        } catch (err) {
+            assertTrue(err.message.includes('Expected 8 fields'), 'Should report field count error');
+        }
+    });
+    
+    it('should reject CSV with invalid numeric values', () => {
+        const csv = `Group Name,Date,Volunteers,Hours,Bag Types,Total Pounds,Pounds per Volunteer,Pounds per Volunteer per Hour
+Test Group,1/1/2024,invalid,2.00,Dog (5),250.00,25.00,12.50`;
+        
+        try {
+            importDataFromCSV(csv);
+            throw new Error('Should have thrown an error');
+        } catch (err) {
+            assertTrue(err.message.includes('Invalid number of volunteers'), 'Should report invalid volunteers');
+        }
+    });
+    
+    it('should reject CSV with negative or zero volunteers', () => {
+        const csv = `Group Name,Date,Volunteers,Hours,Bag Types,Total Pounds,Pounds per Volunteer,Pounds per Volunteer per Hour
+Test Group,1/1/2024,0,2.00,Dog (5),250.00,25.00,12.50`;
+        
+        try {
+            importDataFromCSV(csv);
+            throw new Error('Should have thrown an error');
+        } catch (err) {
+            assertTrue(err.message.includes('Invalid number of volunteers'), 'Should reject zero volunteers');
+        }
+    });
+    
+    it('should reject CSV with empty group name', () => {
+        const csv = `Group Name,Date,Volunteers,Hours,Bag Types,Total Pounds,Pounds per Volunteer,Pounds per Volunteer per Hour
+,1/1/2024,10,2.00,Dog (5),250.00,25.00,12.50`;
+        
+        try {
+            importDataFromCSV(csv);
+            throw new Error('Should have thrown an error');
+        } catch (err) {
+            assertTrue(err.message.includes('Group name is required'), 'Should reject empty group name');
+        }
+    });
+    
+    it('should handle multiple entries for same group in CSV', () => {
+        const csv = `Group Name,Date,Volunteers,Hours,Bag Types,Total Pounds,Pounds per Volunteer,Pounds per Volunteer per Hour
+Test Group,1/1/2024 12:00:00 PM,10,2.00,Dog (5),250.00,25.00,12.50
+Test Group,1/2/2024 1:00:00 PM,12,3.00,Cat (3),300.00,25.00,8.33`;
+        
+        const data = importDataFromCSV(csv);
+        
+        assertEquals(data['Test Group'].length, 2, 'Should have 2 entries for Test Group');
+        assertEquals(data['Test Group'][0].numVolunteers, 10, 'First entry volunteers should match');
+        assertEquals(data['Test Group'][1].numVolunteers, 12, 'Second entry volunteers should match');
+    });
+    
+    it('should export and import round-trip correctly', () => {
+        StorageModule.clear();
+        
+        const bags = [{ count: 5, weight: 50, type: 'Dog' }];
+        const result1 = calculateResults('Group A', 10, 2, bags);
+        const result2 = calculateResults('Group B', 8, 1.5, bags);
+        
+        StorageModule.save(result1);
+        StorageModule.save(result2);
+        
+        // Export
+        const csv = generateAllDataCSV();
+        
+        // Clear storage
+        StorageModule.clear();
+        
+        // Import
+        const importedData = importDataFromCSV(csv);
+        StorageModule.importAll(importedData);
+        
+        // Verify
+        const groups = StorageModule.getGroupNames();
+        assertEquals(groups.length, 2, 'Should have 2 groups after import');
+        assertTrue(groups.includes('Group A'), 'Should have Group A');
+        assertTrue(groups.includes('Group B'), 'Should have Group B');
+        
+        const groupAEntries = StorageModule.getGroup('Group A');
+        assertEquals(groupAEntries.length, 1, 'Group A should have 1 entry');
+        assertEquals(groupAEntries[0].numVolunteers, 10, 'Group A volunteers should match');
+    });
+    
+    it('should detect duplicate entries correctly', () => {
+        const entry1 = {
+            groupName: 'Test Group',
+            timestamp: '2024-01-01T12:00:00.000Z',
+            numVolunteers: 10,
+            durationHours: 2,
+            totalPounds: 250
+        };
+        
+        const entry2 = {
+            groupName: 'Test Group',
+            timestamp: '2024-01-01T12:00:00.000Z',
+            numVolunteers: 10,
+            durationHours: 2,
+            totalPounds: 250
+        };
+        
+        const entry3 = {
+            groupName: 'Test Group',
+            timestamp: '2024-01-01T12:00:00.000Z',
+            numVolunteers: 11,  // Different volunteers
+            durationHours: 2,
+            totalPounds: 250
+        };
+        
+        assertTrue(areEntriesDuplicate(entry1, entry2), 'Identical entries should be duplicates');
+        assertTrue(!areEntriesDuplicate(entry1, entry3), 'Different entries should not be duplicates');
+    });
+    
+    it('should merge data without duplicates', () => {
+        StorageModule.clear();
+        
+        const existingData = {
+            'Test Group': [
+                {
+                    groupName: 'Test Group',
+                    timestamp: '2024-01-01T12:00:00.000Z',
+                    numVolunteers: 10,
+                    durationHours: 2,
+                    totalPounds: 250,
+                    id: '1'
+                }
+            ]
+        };
+        
+        const newData = {
+            'Test Group': [
+                {
+                    groupName: 'Test Group',
+                    timestamp: '2024-01-01T12:00:00.000Z',
+                    numVolunteers: 10,
+                    durationHours: 2,
+                    totalPounds: 250,
+                    id: '2'  // Different ID but same data
+                },
+                {
+                    groupName: 'Test Group',
+                    timestamp: '2024-01-02T12:00:00.000Z',
+                    numVolunteers: 12,
+                    durationHours: 3,
+                    totalPounds: 300,
+                    id: '3'  // Unique entry
+                }
+            ]
+        };
+        
+        const { mergedData, addedCount, skippedCount } = mergeImportedData(existingData, newData);
+        
+        assertEquals(addedCount, 1, 'Should add 1 new entry');
+        assertEquals(skippedCount, 1, 'Should skip 1 duplicate');
+        assertEquals(mergedData['Test Group'].length, 2, 'Should have 2 entries total');
+    });
+    
+    it('should generate CSV for group entries', () => {
+        const bags = [{ count: 5, weight: 50, type: 'Dog' }];
+        const result1 = calculateResults('Test Group', 10, 2, bags);
+        const result2 = calculateResults('Test Group', 8, 1.5, bags);
+        
+        const entries = [
+            { ...result1, timestamp: '2024-01-01T12:00:00.000Z', id: '1' },
+            { ...result2, timestamp: '2024-01-02T12:00:00.000Z', id: '2' }
+        ];
+        
+        const csv = generateGroupEntriesCSV(entries);
+        
+        assertTrue(csv.includes(getCSVHeader()), 'CSV should include header');
+        assertTrue(csv.includes('Test Group'), 'CSV should include group name');
+        
+        const lines = csv.split('\n').filter(l => l.trim() !== '');
+        assertEquals(lines.length, 3, 'Should have header + 2 data lines');
     });
 });
 

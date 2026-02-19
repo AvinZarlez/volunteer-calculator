@@ -11,7 +11,28 @@ const STORAGE_KEY = 'volunteerCalculatorData';
 const DECIMAL_PLACES = 2;
 const UNIT_WEIGHT = 'lbs';
 const UNIT_RATE = 'lbs/hour';
-const TSV_HEADER = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+
+// Unified header fields for CSV and TSV export
+const HEADER_FIELDS = [
+    'Group Name',
+    'Date',
+    'Volunteers',
+    'Hours',
+    'Bag Types',
+    'Total Pounds',
+    'Pounds per Volunteer',
+    'Pounds per Volunteer per Hour'
+];
+
+// Get TSV header
+function getTSVHeader() {
+    return HEADER_FIELDS.join('\t') + '\n';
+}
+
+// Get CSV header
+function getCSVHeader() {
+    return HEADER_FIELDS.join(',');
+}
 
 // Local Storage Module
 const StorageModule = {
@@ -94,6 +115,17 @@ const StorageModule = {
     // Clear all data (for testing)
     clear: function() {
         localStorage.removeItem(STORAGE_KEY);
+    },
+    
+    // Import all data (replaces existing data)
+    importAll: function(data) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            return true;
+        } catch (e) {
+            console.error('Failed to import data to localStorage:', e);
+            return false;
+        }
     }
 };
 
@@ -903,7 +935,7 @@ async function copyEntriesToSpreadsheet() {
     // Check if this is multiple groups or single group
     if (results.groupResults && results.groupResults.length > 0) {
         // Multiple groups - copy all group entries
-        tsvData = TSV_HEADER;
+        tsvData = getTSVHeader();
         
         results.groupResults.forEach(groupResult => {
             const date = new Date();
@@ -922,7 +954,7 @@ async function copyEntriesToSpreadsheet() {
         // Format bag types
         const bagTypesStr = formatBagTypes(results.bagResults);
         
-        tsvData = TSV_HEADER;
+        tsvData = getTSVHeader();
         tsvData += `${results.groupName}\t${formattedDate}\t${results.numVolunteers}\t${formatNumber(results.durationHours)}\t${bagTypesStr}\t${formatNumber(results.totalPounds)}\t${formatNumber(results.poundsPerVolunteer)}\t${formatNumber(results.poundsPerVolunteerPerHour)}`;
     }
     
@@ -991,7 +1023,17 @@ if (typeof module !== 'undefined' && module.exports) {
         convertToHours,
         calculateResults,
         generateMarkdownTable,
-        StorageModule
+        StorageModule,
+        generateAllDataCSV,
+        importDataFromCSV,
+        parseCSVLine,
+        entryToCSVLine,
+        getCSVHeader,
+        getTSVHeader,
+        HEADER_FIELDS,
+        areEntriesDuplicate,
+        mergeImportedData,
+        generateGroupEntriesCSV
     };
 }
 
@@ -1257,16 +1299,80 @@ function copyAllEntriesToClipboard() {
         return;
     }
     
+    // Get all entries and apply date filter
     const entries = StorageModule.getGroup(selectedGroup);
+    const filteredEntries = filterEntriesByDate(entries);
     
-    if (entries.length === 0) {
-        showFeedback('No entries to copy', 'error');
+    if (filteredEntries.length === 0) {
+        showFeedback('No entries to copy in the selected date range', 'error');
         return;
     }
     
-    const tsvData = generateAllEntriesTSV(entries);
+    const tsvData = generateAllEntriesTSV(filteredEntries);
     
-    copyToClipboard(tsvData, `All ${entries.length} entries copied to clipboard! You can paste them into Excel or Google Sheets.`);
+    copyToClipboard(tsvData, `${filteredEntries.length} entries copied to clipboard! You can paste them into Excel or Google Sheets.`);
+}
+
+// Generate CSV for group entries
+function generateGroupEntriesCSV(entries) {
+    let csv = getCSVHeader() + '\n';
+    
+    entries.forEach(entry => {
+        csv += entryToCSVLine(entry);
+    });
+    
+    return csv;
+}
+
+// Download group entries as CSV file
+// eslint-disable-next-line no-unused-vars
+function downloadGroupEntriesAsCSV() {
+    const groupSelect = document.getElementById('groupSelect');
+    const selectedGroup = groupSelect.value;
+    
+    if (!selectedGroup) {
+        showFeedback('Please select a group first', 'error');
+        return;
+    }
+    
+    // Get all entries and apply date filter
+    const entries = StorageModule.getGroup(selectedGroup);
+    const filteredEntries = filterEntriesByDate(entries);
+    
+    if (filteredEntries.length === 0) {
+        showFeedback('No entries to download in the selected date range', 'error');
+        return;
+    }
+    
+    try {
+        const csv = generateGroupEntriesCSV(filteredEntries);
+        
+        // Create a blob and download link
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        // Use group name in filename, sanitize it
+        const sanitizedGroupName = selectedGroup
+            .replace(/[^a-z0-9]/gi, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+            .toLowerCase();
+        const filename = `${sanitizedGroupName}-entries-${new Date().toISOString().split('T')[0]}.csv`;
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showFeedback(`Downloaded ${filteredEntries.length} entries for ${selectedGroup}!`, 'success');
+    } catch (err) {
+        console.error('Download failed:', err);
+        showFeedback('Failed to download entries', 'error');
+    }
 }
 
 // Generate TSV (Tab-Separated Values) for a single entry
@@ -1276,7 +1382,7 @@ function generateEntryTSV(entry) {
     // Format bag types
     const bagTypesStr = formatBagTypes(entry.bagResults);
     
-    let tsv = TSV_HEADER;
+    let tsv = getTSVHeader();
     tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${formatNumber(entry.durationHours)}\t${bagTypesStr}\t${formatNumber(entry.totalPounds)}\t${formatNumber(entry.poundsPerVolunteer)}\t${formatNumber(entry.poundsPerVolunteerPerHour)}`;
     
     return tsv;
@@ -1284,7 +1390,7 @@ function generateEntryTSV(entry) {
 
 // Generate TSV for all entries
 function generateAllEntriesTSV(entries) {
-    let tsv = TSV_HEADER;
+    let tsv = getTSVHeader();
     
     entries.forEach(entry => {
         const formattedDate = formatTimestamp(entry.timestamp);
@@ -1333,4 +1439,375 @@ function showFeedback(message, type) {
     setTimeout(() => {
         feedbackDiv.style.display = 'none';
     }, 3000);
+}
+
+// CSV Export and Import Functions
+
+// Generate CSV for all entries in storage
+function generateAllDataCSV() {
+    const allData = StorageModule.getAll();
+    let csv = getCSVHeader() + '\n';
+    
+    // Iterate through all groups and their entries
+    Object.keys(allData).sort().forEach(groupName => {
+        const entries = allData[groupName];
+        entries.forEach(entry => {
+            csv += entryToCSVLine(entry);
+        });
+    });
+    
+    return csv;
+}
+
+// Convert a single entry to a CSV line
+function entryToCSVLine(entry) {
+    const formattedDate = formatTimestamp(entry.timestamp);
+    const bagTypesStr = formatBagTypes(entry.bagResults);
+    
+    // Escape CSV fields that contain commas or quotes
+    const escapeCSV = (field) => {
+        const str = String(field);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+    };
+    
+    return `${escapeCSV(entry.groupName)},${escapeCSV(formattedDate)},${entry.numVolunteers},${formatNumber(entry.durationHours)},${escapeCSV(bagTypesStr)},${formatNumber(entry.totalPounds)},${formatNumber(entry.poundsPerVolunteer)},${formatNumber(entry.poundsPerVolunteerPerHour)}\n`;
+}
+
+// Export all data to CSV file
+// eslint-disable-next-line no-unused-vars
+function exportAllDataToCSV() {
+    try {
+        const csv = generateAllDataCSV();
+        
+        // Create a blob and download link
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `volunteer-calculator-data-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showFeedback('Data exported successfully!', 'success');
+    } catch (err) {
+        console.error('Export failed:', err);
+        showFeedback('Failed to export data', 'error');
+    }
+}
+
+// Parse CSV line respecting quoted fields
+function parseCSVLine(line) {
+    const fields = [];
+    let currentField = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+        
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                // Escaped quote
+                currentField += '"';
+                i++; // Skip next quote
+            } else {
+                // Toggle quote mode
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            // Field separator
+            fields.push(currentField);
+            currentField = '';
+        } else {
+            currentField += char;
+        }
+    }
+    
+    // Add the last field
+    fields.push(currentField);
+    
+    return fields;
+}
+
+// Parse bag types string back to bag results array
+function parseBagTypes(bagTypesStr) {
+    if (!bagTypesStr || bagTypesStr === 'N/A') {
+        return [];
+    }
+    
+    // Format is like: "Dog (5), Cat (3)"
+    const bagResults = [];
+    const parts = bagTypesStr.split(',').map(s => s.trim());
+    
+    parts.forEach((part, index) => {
+        const match = part.match(/^(.+?)\s*\((\d+)\)$/);
+        if (match) {
+            const type = match[1].trim();
+            const count = parseInt(match[2], 10);
+            // We don't have the original weight, so we'll approximate from total
+            bagResults.push({
+                bagType: index + 1,
+                type: type,
+                count: count,
+                weight: 0, // Will be recalculated if needed
+                total: 0
+            });
+        }
+    });
+    
+    return bagResults;
+}
+
+// Validate and import CSV data
+function importDataFromCSV(csvContent) {
+    const lines = csvContent.split('\n').filter(line => line.trim() !== '');
+    
+    if (lines.length === 0) {
+        throw new Error('CSV file is empty');
+    }
+    
+    // Validate header
+    const header = lines[0];
+    const expectedHeader = getCSVHeader();
+    
+    if (header.trim() !== expectedHeader.trim()) {
+        throw new Error('Invalid CSV header format. Expected: ' + expectedHeader);
+    }
+    
+    // Parse data lines
+    const newData = {};
+    const errors = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        try {
+            const fields = parseCSVLine(lines[i]);
+            
+            if (fields.length !== 8) {
+                errors.push(`Line ${i + 1}: Expected 8 fields, got ${fields.length}`);
+                continue;
+            }
+            
+            const groupName = fields[0].trim();
+            const dateStr = fields[1].trim();
+            const numVolunteers = parseFloat(fields[2]);
+            const durationHours = parseFloat(fields[3]);
+            const bagTypesStr = fields[4].trim();
+            const totalPounds = parseFloat(fields[5]);
+            const poundsPerVolunteer = parseFloat(fields[6]);
+            const poundsPerVolunteerPerHour = parseFloat(fields[7]);
+            
+            // Validate required fields
+            if (!groupName) {
+                errors.push(`Line ${i + 1}: Group name is required`);
+                continue;
+            }
+            
+            if (isNaN(numVolunteers) || numVolunteers <= 0) {
+                errors.push(`Line ${i + 1}: Invalid number of volunteers`);
+                continue;
+            }
+            
+            if (isNaN(durationHours) || durationHours <= 0) {
+                errors.push(`Line ${i + 1}: Invalid duration hours`);
+                continue;
+            }
+            
+            if (isNaN(totalPounds) || totalPounds < 0) {
+                errors.push(`Line ${i + 1}: Invalid total pounds`);
+                continue;
+            }
+            
+            // Parse date - try to preserve original timestamp or create new one
+            let timestamp;
+            const parsedDate = new Date(dateStr);
+            if (!isNaN(parsedDate.getTime())) {
+                timestamp = parsedDate.toISOString();
+            } else {
+                // Use current date but log a warning
+                timestamp = new Date().toISOString();
+                console.warn(`Line ${i + 1}: Could not parse date "${dateStr}", using current date`);
+            }
+            
+            // Create entry object
+            const entry = {
+                groupName: groupName,
+                numVolunteers: numVolunteers,
+                durationHours: durationHours,
+                bagResults: parseBagTypes(bagTypesStr),
+                totalPounds: totalPounds,
+                poundsPerVolunteer: poundsPerVolunteer,
+                poundsPerVolunteerPerHour: poundsPerVolunteerPerHour,
+                timestamp: timestamp,
+                id: Date.now() + '-' + Math.random() + '-' + i
+            };
+            
+            // Add to data structure
+            const trimmedGroupName = trimGroupName(groupName);
+            if (!newData[trimmedGroupName]) {
+                newData[trimmedGroupName] = [];
+            }
+            newData[trimmedGroupName].push(entry);
+            
+        } catch (err) {
+            errors.push(`Line ${i + 1}: ${err.message}`);
+        }
+    }
+    
+    if (errors.length > 0) {
+        throw new Error('Import errors:\n' + errors.join('\n'));
+    }
+    
+    if (Object.keys(newData).length === 0) {
+        throw new Error('No valid data found in CSV file');
+    }
+    
+    return newData;
+}
+
+// Check if two entries are duplicates (same group, date, volunteers, hours, total pounds)
+function areEntriesDuplicate(entry1, entry2) {
+    // Compare key fields to determine if entries are the same
+    return entry1.groupName === entry2.groupName &&
+           entry1.timestamp === entry2.timestamp &&
+           entry1.numVolunteers === entry2.numVolunteers &&
+           entry1.durationHours === entry2.durationHours &&
+           entry1.totalPounds === entry2.totalPounds;
+}
+
+// Merge imported data with existing data (add without duplicates)
+function mergeImportedData(existingData, newData) {
+    const mergedData = JSON.parse(JSON.stringify(existingData)); // Deep clone
+    let addedCount = 0;
+    let skippedCount = 0;
+    
+    // Iterate through new data
+    Object.keys(newData).forEach(groupName => {
+        const newEntries = newData[groupName];
+        
+        if (!mergedData[groupName]) {
+            mergedData[groupName] = [];
+        }
+        
+        newEntries.forEach(newEntry => {
+            // Check if this entry already exists
+            const isDuplicate = mergedData[groupName].some(existingEntry => 
+                areEntriesDuplicate(existingEntry, newEntry)
+            );
+            
+            if (!isDuplicate) {
+                mergedData[groupName].push(newEntry);
+                addedCount++;
+            } else {
+                skippedCount++;
+            }
+        });
+    });
+    
+    return { mergedData, addedCount, skippedCount };
+}
+
+// Handle file import - ADD mode
+// eslint-disable-next-line no-unused-vars
+function handleImportAddMode() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+            const text = await file.text();
+            const newData = importDataFromCSV(text);
+            
+            const entryCount = Object.values(newData).reduce((sum, entries) => sum + entries.length, 0);
+            const groupCount = Object.keys(newData).length;
+            
+            // ADD mode - merge with existing data
+            const existingData = StorageModule.getAll();
+            const { mergedData, addedCount, skippedCount } = mergeImportedData(existingData, newData);
+            
+            // Confirm before proceeding
+            const confirmMsg = `Found ${entryCount} entries across ${groupCount} groups.\n\nThis will ADD ${addedCount} new entries to your existing data.\n${skippedCount} duplicate(s) will be skipped.\n\nContinue?`;
+            if (!confirm(confirmMsg)) {
+                showFeedback('Import cancelled', 'error');
+                return;
+            }
+            
+            StorageModule.importAll(mergedData);
+            showFeedback(`Successfully added ${addedCount} entries! (${skippedCount} duplicates skipped)`, 'success');
+            
+            // Refresh the data viewer
+            refreshGroupList();
+            
+        } catch (err) {
+            console.error('Import failed:', err);
+            showFeedback('Import failed: ' + err.message, 'error');
+        }
+    };
+    
+    input.click();
+}
+
+// Handle file import - REPLACE mode
+// eslint-disable-next-line no-unused-vars
+function handleImportReplaceMode() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+            const text = await file.text();
+            const newData = importDataFromCSV(text);
+            
+            const entryCount = Object.values(newData).reduce((sum, entries) => sum + entries.length, 0);
+            const groupCount = Object.keys(newData).length;
+            
+            // REPLACE mode - confirm before proceeding
+            const confirmMsg = `Found ${entryCount} entries across ${groupCount} groups.\n\n⚠️ WARNING: This will REPLACE ALL existing data!\n\nAll current entries will be permanently deleted and replaced with the imported data.\n\nAre you sure you want to continue?`;
+            if (!confirm(confirmMsg)) {
+                showFeedback('Import cancelled', 'error');
+                return;
+            }
+            
+            StorageModule.importAll(newData);
+            showFeedback(`Successfully replaced all data with ${entryCount} entries!`, 'success');
+            
+            // Refresh the data viewer
+            refreshGroupList();
+            
+        } catch (err) {
+            console.error('Import failed:', err);
+            showFeedback('Import failed: ' + err.message, 'error');
+        }
+    };
+    
+    input.click();
+}
+
+// Toggle Data Management section
+// eslint-disable-next-line no-unused-vars
+function toggleDataManagement() {
+    const content = document.getElementById('dataManagementContent');
+    const toggle = document.getElementById('dataManagementToggle');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.textContent = '▼';
+    } else {
+        content.style.display = 'none';
+        toggle.textContent = '▶';
+    }
 }
