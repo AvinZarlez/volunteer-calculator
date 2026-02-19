@@ -757,6 +757,7 @@ function saveCalculationData() {
             const saveBtn = document.getElementById('saveDataBtn');
             saveBtn.disabled = true;
             saveBtn.textContent = '✓ Saved';
+            if (typeof CloudSyncModule !== 'undefined' && CloudSyncModule.isLoggedIn()) { CloudSyncModule.syncToCloud(); }
         } else {
             showSaveFeedback('⚠ Failed to save some group data', false);
         }
@@ -770,6 +771,7 @@ function saveCalculationData() {
             const saveBtn = document.getElementById('saveDataBtn');
             saveBtn.disabled = true;
             saveBtn.textContent = '✓ Saved';
+            if (typeof CloudSyncModule !== 'undefined' && CloudSyncModule.isLoggedIn()) { CloudSyncModule.syncToCloud(); }
         } else {
             showSaveFeedback('⚠ Failed to save data', false);
         }
@@ -1274,6 +1276,7 @@ function confirmDeleteEntry(groupName, entryId) {
         
         // Show feedback
         showFeedback('Entry deleted successfully', 'success');
+        if (typeof CloudSyncModule !== 'undefined' && CloudSyncModule.isLoggedIn()) { CloudSyncModule.syncToCloud(); }
     } else {
         showFeedback('Failed to delete entry', 'error');
     }
@@ -1752,6 +1755,7 @@ function handleImportAddMode() {
             
             StorageModule.importAll(mergedData);
             showFeedback(`Successfully added ${addedCount} entries! (${skippedCount} duplicates skipped)`, 'success');
+            if (typeof CloudSyncModule !== 'undefined' && CloudSyncModule.isLoggedIn()) { CloudSyncModule.syncToCloud(); }
             
             // Refresh the data viewer
             refreshGroupList();
@@ -1792,6 +1796,7 @@ function handleImportReplaceMode() {
             
             StorageModule.importAll(newData);
             showFeedback(`Successfully replaced all data with ${entryCount} entries!`, 'success');
+            if (typeof CloudSyncModule !== 'undefined' && CloudSyncModule.isLoggedIn()) { CloudSyncModule.syncToCloud(); }
             
             // Refresh the data viewer
             refreshGroupList();
@@ -1985,6 +1990,7 @@ function deleteSelectedEntries() {
     
     if (deletedCount > 0) {
         showFeedback(`Successfully deleted ${deletedCount} ${deletedCount === 1 ? 'entry' : 'entries'}`, 'success');
+        if (typeof CloudSyncModule !== 'undefined' && CloudSyncModule.isLoggedIn()) { CloudSyncModule.syncToCloud(); }
     } else {
         showFeedback('Failed to delete entries', 'error');
     }
