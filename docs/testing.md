@@ -1,6 +1,6 @@
 # 🧪 Testing Strategy
 
-[← Back to Documentation Hub](index.md)
+[← Back to Documentation Hub](README.md)
 
 This document provides a comprehensive guide to the testing approach, test coverage, and how to run and write tests for the Volunteer Calculator.
 
@@ -571,4 +571,4 @@ Before committing:
 
 ---
 
-[← Back to Documentation Hub](index.md) | [Next: Browser Compatibility →](browser-compatibility.md)
+[← Back to Documentation Hub](README.md) | [Next: Browser Compatibility →](browser-compatibility.md)

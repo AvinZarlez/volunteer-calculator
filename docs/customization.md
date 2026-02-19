@@ -263,26 +263,45 @@ document.getElementById('csvBtn').addEventListener('click', downloadCSV);
 
 ## Advanced Customizations
 
-### Add Data Persistence with LocalStorage
+### Data Persistence (Already Implemented)
 
-**Save calculations:**
+The application already includes comprehensive data persistence using LocalStorage. See the Data Viewer tab and existing storage functions in `calculator.js`:
+
+- `saveCalculationData()`: Saves calculation results
+- `StorageModule.save()`, `StorageModule.load()`: Storage operations
+- Data Viewer: Complete UI for managing saved data
+
+**To extend storage functionality:**
 ```javascript
-function saveCalculation(results) {
-    const history = JSON.parse(localStorage.getItem('calculationHistory') || '[]');
-    history.push({
-        timestamp: new Date().toISOString(),
-        results: results
-    });
-    localStorage.setItem('calculationHistory', JSON.stringify(history));
+// Add custom metadata to entries
+function saveWithMetadata(results, customData) {
+    const entry = {
+        ...results,
+        customField: customData.value,
+        tags: customData.tags
+    };
+    StorageModule.save(results.groupName, entry);
 }
 ```
 
-**Load history:**
+### Add Additional Animal Types
+
+**Extend beyond Dog, Cat, Other:**
+1. Update radio button options in `addBagEntry()` function
+2. Add new options to the HTML template
+3. Update validation if needed
+4. Test export/import to ensure new types are preserved
+
+**Example:**
 ```javascript
-function loadHistory() {
-    const history = JSON.parse(localStorage.getItem('calculationHistory') || '[]');
-    return history;
-}
+// In addBagEntry(), add more animal type options:
+<div class="bag-type-selection">
+    <label><input type="radio" name="bagType${newIndex}" value="Dog"> Dog</label>
+    <label><input type="radio" name="bagType${newIndex}" value="Cat"> Cat</label>
+    <label><input type="radio" name="bagType${newIndex}" value="Bird"> Bird</label>
+    <label><input type="radio" name="bagType${newIndex}" value="Rabbit"> Rabbit</label>
+    <label><input type="radio" name="bagType${newIndex}" value="Other"> Other</label>
+</div>
 ```
 
 ### Add Print Functionality
