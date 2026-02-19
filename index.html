@@ -264,10 +264,68 @@
               style="display: none"
             ></div>
 
+            <div id="selectionBanner" class="selection-banner" style="display: none">
+              <div class="selection-banner-content">
+                <div class="selection-info">
+                  <span id="selectionCount">0</span> selected
+                </div>
+                <div class="selection-actions">
+                  <button
+                    type="button"
+                    onclick="selectAllEntries()"
+                    class="btn-banner"
+                    title="Select all visible entries"
+                  >
+                    ✓ Select All
+                  </button>
+                  <button
+                    type="button"
+                    onclick="copySelectedEntries()"
+                    class="btn-banner btn-copy"
+                    title="Copy selected entries to clipboard"
+                  >
+                    📋 Copy
+                  </button>
+                  <button
+                    type="button"
+                    onclick="downloadSelectedEntries()"
+                    class="btn-banner btn-download"
+                    title="Download selected entries as CSV"
+                  >
+                    💾 Download
+                  </button>
+                  <button
+                    type="button"
+                    onclick="deleteSelectedEntries()"
+                    class="btn-banner btn-delete-banner"
+                    title="Delete selected entries"
+                  >
+                    🗑️ Delete
+                  </button>
+                  <button
+                    type="button"
+                    onclick="clearSelection()"
+                    class="btn-banner btn-cancel"
+                    title="Deselect all"
+                  >
+                    ✕ Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div class="data-table-container">
               <table class="data-table">
                 <thead>
                   <tr>
+                    <th class="checkbox-col">
+                      <input
+                        type="checkbox"
+                        id="selectAllCheckbox"
+                        onchange="toggleAllCheckboxes(this.checked)"
+                        title="Select/deselect all"
+                      />
+                    </th>
                     <th>#</th>
                     <th>Date & Time</th>
                     <th>Volunteers</th>
@@ -276,7 +334,6 @@
                     <th>Total Pounds</th>
                     <th>Pounds/Volunteer</th>
                     <th>Pounds/Vol/Hour</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="dataTableBody">

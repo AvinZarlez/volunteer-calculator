@@ -4,6 +4,9 @@
 let bagCounter = 1;
 let groupCounter = 1;
 let currentView = 'calculator'; // 'calculator' or 'dataViewer' // eslint-disable-line no-unused-vars
+let selectedEntries = new Set(); // Track selected entry IDs
+let currentGroupName = ''; // Track current group being viewed
+let currentEntries = []; // Track current entries being displayed
 
 // Constants
 const DEFAULT_BAG_TYPE = 'Dog';
@@ -1170,6 +1173,13 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
     const actionsDiv = document.getElementById('dataViewerActions');
     const summaryDiv = document.getElementById('groupSummary');
     
+    // Store current group and entries for selection operations
+    currentGroupName = groupName;
+    currentEntries = entries;
+    
+    // Clear selection when loading new data
+    clearSelection();
+    
     if (entries.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="9" class="no-data">No entries found for this group</td></tr>';
         actionsDiv.style.display = 'none';
@@ -1222,13 +1232,13 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
         // Format bag types
         const bagTypesStr = formatBagTypes(entry.bagResults);
         
-        // For "All Groups" view, disable delete and modify copy
-        const actionButtons = isAllGroups
-            ? `<button class="btn-small btn-copy" onclick="copyEntryToClipboard('${entry.groupName}', '${entry.id}')">📋 Copy</button>`
-            : `<button class="btn-small btn-copy" onclick="copyEntryToClipboard('${groupName}', '${entry.id}')">📋 Copy</button>
-               <button class="btn-small btn-delete" onclick="confirmDeleteEntry('${groupName}', '${entry.id}')">🗑️ Delete</button>`;
+        // Disable checkboxes for "All Groups" view to simplify delete operation
+        const checkboxHtml = isAllGroups
+            ? '<td class="checkbox-col"><input type="checkbox" disabled title="Selection not available in All Groups view" /></td>'
+            : `<td class="checkbox-col"><input type="checkbox" class="entry-checkbox" data-entry-id="${entry.id}" onchange="handleCheckboxChange()" /></td>`;
         
         row.innerHTML = `
+            ${checkboxHtml}
             <td>${index + 1}</td>
             <td>${formattedDate}</td>
             <td>${entry.numVolunteers}</td>
@@ -1237,9 +1247,6 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
             <td>${formatNumber(entry.totalPounds)}</td>
             <td>${formatNumber(entry.poundsPerVolunteer)}</td>
             <td>${formatNumber(entry.poundsPerVolunteerPerHour)}</td>
-            <td class="action-buttons">
-                ${actionButtons}
-            </td>
         `;
         
         tableBody.appendChild(row);
@@ -1809,5 +1816,173 @@ function toggleDataManagement() {
     } else {
         content.style.display = 'none';
         toggle.textContent = '▶';
+    }
+}
+
+// ============================================
+// Selection Functions
+// ============================================
+
+// Update the selection banner visibility and count
+function updateSelectionBanner() {
+    const banner = document.getElementById('selectionBanner');
+    const countSpan = document.getElementById('selectionCount');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    if (!banner || !countSpan) return;
+    
+    const count = selectedEntries.size;
+    countSpan.textContent = count;
+    
+    if (count > 0) {
+        banner.style.display = 'block';
+    } else {
+        banner.style.display = 'none';
+    }
+    
+    // Update the "select all" checkbox state
+    if (selectAllCheckbox) {
+        const totalCheckboxes = document.querySelectorAll('.entry-checkbox:not([disabled])').length;
+        selectAllCheckbox.checked = count > 0 && count === totalCheckboxes;
+        selectAllCheckbox.indeterminate = count > 0 && count < totalCheckboxes;
+    }
+}
+
+// Handle individual checkbox change
+// eslint-disable-next-line no-unused-vars
+function handleCheckboxChange() {
+    // Update selected entries set
+    selectedEntries.clear();
+    document.querySelectorAll('.entry-checkbox:checked').forEach(checkbox => {
+        selectedEntries.add(checkbox.getAttribute('data-entry-id'));
+    });
+    
+    updateSelectionBanner();
+}
+
+// Toggle all checkboxes
+// eslint-disable-next-line no-unused-vars
+function toggleAllCheckboxes(checked) {
+    document.querySelectorAll('.entry-checkbox:not([disabled])').forEach(checkbox => {
+        checkbox.checked = checked;
+    });
+    handleCheckboxChange();
+}
+
+// Select all entries
+// eslint-disable-next-line no-unused-vars
+function selectAllEntries() {
+    toggleAllCheckboxes(true);
+}
+
+// Clear selection
+// eslint-disable-next-line no-unused-vars
+function clearSelection() {
+    selectedEntries.clear();
+    document.querySelectorAll('.entry-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    }
+    updateSelectionBanner();
+}
+
+// Get selected entries from current entries list
+function getSelectedEntriesData() {
+    return currentEntries.filter(entry => selectedEntries.has(entry.id));
+}
+
+// Copy selected entries to clipboard
+// eslint-disable-next-line no-unused-vars
+function copySelectedEntries() {
+    if (selectedEntries.size === 0) {
+        showFeedback('No entries selected', 'error');
+        return;
+    }
+    
+    const entries = getSelectedEntriesData();
+    const tsvData = getTSVHeader() + entries.map(entry => entryToTSV(entry)).join('\n');
+    
+    navigator.clipboard.writeText(tsvData).then(() => {
+        showFeedback(`Copied ${selectedEntries.size} entries to clipboard`, 'success');
+    }).catch(err => {
+        console.error('Failed to copy to clipboard:', err);
+        showFeedback('Failed to copy to clipboard', 'error');
+    });
+}
+
+// Download selected entries as CSV
+// eslint-disable-next-line no-unused-vars
+function downloadSelectedEntries() {
+    if (selectedEntries.size === 0) {
+        showFeedback('No entries selected', 'error');
+        return;
+    }
+    
+    const entries = getSelectedEntriesData();
+    const csv = getCSVHeader() + '\n' + entries.map(entry => entryToCSVLine(entry)).join('\n');
+    
+    // Create a filename based on the group name and current date
+    const sanitizedGroupName = currentGroupName.replace(/[^a-z0-9]/gi, '_');
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `${sanitizedGroupName}_selected_${dateStr}.csv`;
+    
+    // Create and trigger download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    showFeedback(`Downloaded ${selectedEntries.size} entries as ${filename}`, 'success');
+}
+
+// Delete selected entries
+// eslint-disable-next-line no-unused-vars
+function deleteSelectedEntries() {
+    if (selectedEntries.size === 0) {
+        showFeedback('No entries selected', 'error');
+        return;
+    }
+    
+    const count = selectedEntries.size;
+    const confirmMessage = `Are you sure you want to delete ${count} selected ${count === 1 ? 'entry' : 'entries'}? This action cannot be undone.`;
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    // Second confirmation
+    const secondConfirm = `Final confirmation: Delete ${count} ${count === 1 ? 'entry' : 'entries'}?`;
+    if (!confirm(secondConfirm)) {
+        return;
+    }
+    
+    // Delete each selected entry
+    let deletedCount = 0;
+    selectedEntries.forEach(entryId => {
+        const success = StorageModule.deleteEntry(currentGroupName, entryId);
+        if (success) {
+            deletedCount++;
+        }
+    });
+    
+    // Clear selection
+    clearSelection();
+    
+    // Reload data
+    loadGroupData();
+    
+    if (deletedCount > 0) {
+        showFeedback(`Successfully deleted ${deletedCount} ${deletedCount === 1 ? 'entry' : 'entries'}`, 'success');
+    } else {
+        showFeedback('Failed to delete entries', 'error');
     }
 }

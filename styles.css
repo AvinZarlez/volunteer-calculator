@@ -887,3 +887,164 @@ footer a:hover {
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================
+   Selection Banner Styles
+   ============================================ */
+
+.selection-banner {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    margin: -30px -30px 20px -30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.selection-banner-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.selection-info {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.selection-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-banner {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-banner:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-banner:active {
+    transform: translateY(0);
+}
+
+.btn-banner.btn-copy {
+    background: rgba(40, 167, 69, 0.8);
+    border-color: rgba(40, 167, 69, 1);
+}
+
+.btn-banner.btn-copy:hover {
+    background: rgba(40, 167, 69, 1);
+}
+
+.btn-banner.btn-download {
+    background: rgba(0, 123, 255, 0.8);
+    border-color: rgba(0, 123, 255, 1);
+}
+
+.btn-banner.btn-download:hover {
+    background: rgba(0, 123, 255, 1);
+}
+
+.btn-banner.btn-delete-banner {
+    background: rgba(220, 53, 69, 0.8);
+    border-color: rgba(220, 53, 69, 1);
+}
+
+.btn-banner.btn-delete-banner:hover {
+    background: rgba(220, 53, 69, 1);
+}
+
+.btn-banner.btn-cancel {
+    background: rgba(108, 117, 125, 0.8);
+    border-color: rgba(108, 117, 125, 1);
+}
+
+.btn-banner.btn-cancel:hover {
+    background: rgba(108, 117, 125, 1);
+}
+
+/* ============================================
+   Checkbox Column Styles
+   ============================================ */
+
+.checkbox-col {
+    width: 40px;
+    text-align: center;
+    padding: 8px !important;
+}
+
+.entry-checkbox,
+#selectAllCheckbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.entry-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Update table to accommodate new column */
+.data-table {
+    table-layout: auto;
+}
+
+.data-table th:first-child,
+.data-table td:first-child {
+    width: 40px;
+}
+
+/* Responsive adjustments for selection banner */
+@media (max-width: 768px) {
+    .selection-banner {
+        padding: 12px 15px;
+    }
+    
+    .selection-banner-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .selection-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .btn-banner {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+}
