@@ -25,7 +25,7 @@ const StorageModule = {
         };
         
         const allData = this.getAll();
-        const groupName = normalizeGroupName(result.groupName);
+        const groupName = trimGroupName(result.groupName);
         
         if (!allData[groupName]) {
             allData[groupName] = [];
@@ -56,7 +56,7 @@ const StorageModule = {
     // Get entries for a specific group
     getGroup: function(groupName) {
         const allData = this.getAll();
-        return allData[normalizeGroupName(groupName)] || [];
+        return allData[trimGroupName(groupName)] || [];
     },
     
     // Get all group names
@@ -68,7 +68,7 @@ const StorageModule = {
     // Delete a specific entry
     deleteEntry: function(groupName, entryId) {
         const allData = this.getAll();
-        const groupData = allData[normalizeGroupName(groupName)];
+        const groupData = allData[trimGroupName(groupName)];
         
         if (!groupData) return false;
         
@@ -79,7 +79,7 @@ const StorageModule = {
         
         // Remove group if empty
         if (groupData.length === 0) {
-            delete allData[normalizeGroupName(groupName)];
+            delete allData[trimGroupName(groupName)];
         }
         
         try {
@@ -122,9 +122,19 @@ function getElementId(type, index) {
     return `${type}${index}`;
 }
 
-// Normalize group name (trim whitespace)
-function normalizeGroupName(name) {
+// Trim group name
+function trimGroupName(name) {
     return name.trim();
+}
+
+// Clear data viewer UI
+function clearDataViewerUI() {
+    document.getElementById('dataTableBody').innerHTML = '';
+    document.getElementById('dataViewerActions').style.display = 'none';
+    const summaryDiv = document.getElementById('groupSummary');
+    if (summaryDiv) {
+        summaryDiv.style.display = 'none';
+    }
 }
 
 // Initialize on page load (only in browser)
@@ -974,12 +984,7 @@ function refreshGroupList() {
     });
     
     // Clear the data table and summary
-    document.getElementById('dataTableBody').innerHTML = '';
-    document.getElementById('dataViewerActions').style.display = 'none';
-    const summaryDiv = document.getElementById('groupSummary');
-    if (summaryDiv) {
-        summaryDiv.style.display = 'none';
-    }
+    clearDataViewerUI();
 }
 
 function loadGroupData() {
@@ -987,12 +992,7 @@ function loadGroupData() {
     const selectedGroup = groupSelect.value;
     
     if (!selectedGroup) {
-        document.getElementById('dataTableBody').innerHTML = '';
-        document.getElementById('dataViewerActions').style.display = 'none';
-        const summaryDiv = document.getElementById('groupSummary');
-        if (summaryDiv) {
-            summaryDiv.style.display = 'none';
-        }
+        clearDataViewerUI();
         return;
     }
     
