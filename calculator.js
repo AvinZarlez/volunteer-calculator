@@ -4,7 +4,7 @@
 let bagCounter = 1;
 let groupCounter = 1;
 let currentView = 'calculator'; // 'calculator' or 'dataViewer' // eslint-disable-line no-unused-vars
-let selectedEntries = new Set(); // Track selected entry IDs
+let selectedEntries = new Map(); // Track selected entry IDs mapped to their group names
 let currentGroupName = ''; // Track current group being viewed
 let currentEntries = []; // Track current entries being displayed
 
@@ -1232,10 +1232,8 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
         // Format bag types
         const bagTypesStr = formatBagTypes(entry.bagResults);
         
-        // Disable checkboxes for "All Groups" view to simplify delete operation
-        const checkboxHtml = isAllGroups
-            ? '<td class="checkbox-col"><input type="checkbox" disabled title="Selection not available in All Groups view" /></td>'
-            : `<td class="checkbox-col"><input type="checkbox" class="entry-checkbox" data-entry-id="${entry.id}" onchange="handleCheckboxChange()" /></td>`;
+        // Add checkboxes for all views, storing both entry ID and group name for proper deletion
+        const checkboxHtml = `<td class="checkbox-col"><input type="checkbox" class="entry-checkbox" data-entry-id="${entry.id}" data-group-name="${entry.groupName}" onchange="handleCheckboxChange()" /></td>`;
         
         row.innerHTML = `
             ${checkboxHtml}
@@ -1845,7 +1843,7 @@ function updateSelectionBanner() {
     
     // Update the "select all" checkbox state
     if (selectAllCheckbox) {
-        const totalCheckboxes = document.querySelectorAll('.entry-checkbox:not([disabled])').length;
+        const totalCheckboxes = document.querySelectorAll('.entry-checkbox').length;
         selectAllCheckbox.checked = count > 0 && count === totalCheckboxes;
         selectAllCheckbox.indeterminate = count > 0 && count < totalCheckboxes;
     }
@@ -1854,10 +1852,12 @@ function updateSelectionBanner() {
 // Handle individual checkbox change
 // eslint-disable-next-line no-unused-vars
 function handleCheckboxChange() {
-    // Update selected entries set
+    // Update selected entries map
     selectedEntries.clear();
     document.querySelectorAll('.entry-checkbox:checked').forEach(checkbox => {
-        selectedEntries.add(checkbox.getAttribute('data-entry-id'));
+        const entryId = checkbox.getAttribute('data-entry-id');
+        const groupName = checkbox.getAttribute('data-group-name');
+        selectedEntries.set(entryId, groupName);
     });
     
     updateSelectionBanner();
@@ -1866,7 +1866,7 @@ function handleCheckboxChange() {
 // Toggle all checkboxes
 // eslint-disable-next-line no-unused-vars
 function toggleAllCheckboxes(checked) {
-    document.querySelectorAll('.entry-checkbox:not([disabled])').forEach(checkbox => {
+    document.querySelectorAll('.entry-checkbox').forEach(checkbox => {
         checkbox.checked = checked;
     });
     handleCheckboxChange();
@@ -1968,10 +1968,10 @@ function deleteSelectedEntries() {
         return;
     }
     
-    // Delete each selected entry
+    // Delete each selected entry using its group name from the map
     let deletedCount = 0;
-    selectedEntries.forEach(entryId => {
-        const success = StorageModule.deleteEntry(currentGroupName, entryId);
+    selectedEntries.forEach((groupName, entryId) => {
+        const success = StorageModule.deleteEntry(groupName, entryId);
         if (success) {
             deletedCount++;
         }
