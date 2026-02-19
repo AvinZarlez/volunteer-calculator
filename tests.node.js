@@ -595,5 +595,78 @@ runner.describe('Storage Module Tests', (it) => {
     });
 });
 
+// Markdown Generation Tests
+runner.describe('Markdown Generation Tests', (it) => {
+    it('should generate markdown for single group result', () => {
+        const bags = [
+            { count: 5, weight: 30, type: 'Dog' },
+            { count: 3, weight: 25, type: 'Cat' }
+        ];
+        const result = calculateResults('Test Group', 10, 2, bags);
+        
+        const markdown = generateMarkdownTable(result);
+        
+        assertTrue(markdown.includes('# Test Group - Volunteer Results'), 'Should include title');
+        assertTrue(markdown.includes('| Volunteer Group | Test Group |'), 'Should include group name');
+        assertTrue(markdown.includes('| Number of Volunteers | 10 |'), 'Should include volunteer count');
+        assertTrue(markdown.includes('Dog'), 'Should include dog type');
+        assertTrue(markdown.includes('Cat'), 'Should include cat type');
+        assertTrue(markdown.includes('Total Pet Food Processed'), 'Should include total');
+    });
+    
+    it('should generate markdown for multiple groups result', () => {
+        const bags = [{ count: 5, weight: 30, type: 'Dog' }];
+        const groups = [
+            { name: 'Alpha Team', volunteers: 10 },
+            { name: 'Beta Team', volunteers: 8 }
+        ];
+        
+        // Simulate multiple group result structure
+        const multiGroupResult = {
+            durationHours: 2,
+            bagResults: [{
+                bagType: 1,
+                count: 5,
+                weight: 30,
+                type: 'Dog',
+                total: 150
+            }],
+            groupResults: [
+                {
+                    groupName: 'Alpha Team',
+                    numVolunteers: 10,
+                    durationHours: 2,
+                    bagResults: [{ bagType: 1, count: 5, weight: 30, type: 'Dog', total: 150 }],
+                    totalPounds: 150,
+                    poundsPerVolunteer: 15,
+                    poundsPerVolunteerPerHour: 7.5
+                },
+                {
+                    groupName: 'Beta Team',
+                    numVolunteers: 8,
+                    durationHours: 2,
+                    bagResults: [{ bagType: 1, count: 5, weight: 30, type: 'Dog', total: 150 }],
+                    totalPounds: 150,
+                    poundsPerVolunteer: 18.75,
+                    poundsPerVolunteerPerHour: 9.375
+                }
+            ],
+            totalPounds: 150,
+            totalVolunteers: 18,
+            totalPoundsPerVolunteer: 8.33,
+            totalPoundsPerVolunteerPerHour: 4.17
+        };
+        
+        const markdown = generateMarkdownTable(multiGroupResult);
+        
+        assertTrue(markdown.includes('# Volunteer Results'), 'Should include generic title');
+        assertTrue(markdown.includes('## Per-Group Results'), 'Should include per-group section');
+        assertTrue(markdown.includes('Alpha Team'), 'Should include Alpha Team');
+        assertTrue(markdown.includes('Beta Team'), 'Should include Beta Team');
+        assertTrue(markdown.includes('## Combined Totals'), 'Should include combined totals');
+        assertTrue(markdown.includes('Total Volunteers | 18'), 'Should include total volunteers');
+    });
+});
+
 // Run all tests
 runner.run();
