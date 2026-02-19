@@ -7,6 +7,11 @@ let currentView = 'calculator'; // 'calculator' or 'dataViewer' // eslint-disabl
 
 // Constants
 const DEFAULT_BAG_TYPE = 'Dog';
+const STORAGE_KEY = 'volunteerCalculatorData';
+const DECIMAL_PLACES = 2;
+const UNIT_WEIGHT = 'lbs';
+const UNIT_RATE = 'lbs/hour';
+const TSV_HEADER = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
 
 // Local Storage Module
 const StorageModule = {
@@ -20,7 +25,7 @@ const StorageModule = {
         };
         
         const allData = this.getAll();
-        const groupName = result.groupName.trim();
+        const groupName = trimGroupName(result.groupName);
         
         if (!allData[groupName]) {
             allData[groupName] = [];
@@ -29,7 +34,7 @@ const StorageModule = {
         allData[groupName].push(entry);
         
         try {
-            localStorage.setItem('volunteerCalculatorData', JSON.stringify(allData));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
             return true;
         } catch (e) {
             console.error('Failed to save to localStorage:', e);
@@ -40,7 +45,7 @@ const StorageModule = {
     // Get all data
     getAll: function() {
         try {
-            const data = localStorage.getItem('volunteerCalculatorData');
+            const data = localStorage.getItem(STORAGE_KEY);
             return data ? JSON.parse(data) : {};
         } catch (e) {
             console.error('Failed to read from localStorage:', e);
@@ -51,7 +56,7 @@ const StorageModule = {
     // Get entries for a specific group
     getGroup: function(groupName) {
         const allData = this.getAll();
-        return allData[groupName.trim()] || [];
+        return allData[trimGroupName(groupName)] || [];
     },
     
     // Get all group names
@@ -63,7 +68,7 @@ const StorageModule = {
     // Delete a specific entry
     deleteEntry: function(groupName, entryId) {
         const allData = this.getAll();
-        const groupData = allData[groupName.trim()];
+        const groupData = allData[trimGroupName(groupName)];
         
         if (!groupData) return false;
         
@@ -74,11 +79,11 @@ const StorageModule = {
         
         // Remove group if empty
         if (groupData.length === 0) {
-            delete allData[groupName.trim()];
+            delete allData[trimGroupName(groupName)];
         }
         
         try {
-            localStorage.setItem('volunteerCalculatorData', JSON.stringify(allData));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
             return true;
         } catch (e) {
             console.error('Failed to delete from localStorage:', e);
@@ -88,9 +93,44 @@ const StorageModule = {
     
     // Clear all data (for testing)
     clear: function() {
-        localStorage.removeItem('volunteerCalculatorData');
+        localStorage.removeItem(STORAGE_KEY);
     }
 };
+
+// Helper Functions
+// Format a number to specified decimal places
+function formatNumber(num, places = DECIMAL_PLACES) {
+    return num.toFixed(places);
+}
+
+// Format bag types for display
+function formatBagTypes(bagResults) {
+    if (!bagResults || bagResults.length === 0) {
+        return 'N/A';
+    }
+    return bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
+}
+
+// Format timestamp for display
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+}
+
+// Trim group name
+function trimGroupName(name) {
+    return name.trim();
+}
+
+// Clear data viewer UI
+function clearDataViewerUI() {
+    document.getElementById('dataTableBody').innerHTML = '';
+    document.getElementById('dataViewerActions').style.display = 'none';
+    const summaryDiv = document.getElementById('groupSummary');
+    if (summaryDiv) {
+        summaryDiv.style.display = 'none';
+    }
+}
 
 // Initialize on page load (only in browser)
 if (typeof document !== 'undefined') {
@@ -481,7 +521,7 @@ function displayResults(results) {
         html += `
             <div class="result-item">
                 <span class="result-label">${bag.type} - Bag Type ${bag.bagType} (${bag.count} bags × ${bag.weight} lbs):</span>
-                <span class="result-value">${bag.total.toFixed(2)} lbs</span>
+                <span class="result-value">${formatNumber(bag.total)} lbs</span>
             </div>
         `;
     });
@@ -501,11 +541,11 @@ function displayResults(results) {
                 </div>
                 <div class="result-item">
                     <span class="result-label">Amount Processed per Volunteer:</span>
-                    <span class="result-value">${groupResult.poundsPerVolunteer.toFixed(2)} lbs</span>
+                    <span class="result-value">${formatNumber(groupResult.poundsPerVolunteer)} lbs</span>
                 </div>
                 <div class="result-item">
                     <span class="result-label">Amount Processed per Volunteer per Hour:</span>
-                    <span class="result-value">${groupResult.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
+                    <span class="result-value">${formatNumber(groupResult.poundsPerVolunteerPerHour)} lbs/hour</span>
                 </div>
             `;
             html += '</div>';
@@ -518,7 +558,7 @@ function displayResults(results) {
             html += `
                 <div class="result-item">
                     <span class="result-label">Total Pet Food Processed:</span>
-                    <span class="result-value">${results.totalPounds.toFixed(2)} lbs</span>
+                    <span class="result-value">${formatNumber(results.totalPounds)} lbs</span>
                 </div>
                 <div class="result-item">
                     <span class="result-label">Total Volunteers (All Groups):</span>
@@ -526,11 +566,11 @@ function displayResults(results) {
                 </div>
                 <div class="result-item">
                     <span class="result-label">Average per Volunteer (All Groups):</span>
-                    <span class="result-value">${results.totalPoundsPerVolunteer.toFixed(2)} lbs</span>
+                    <span class="result-value">${formatNumber(results.totalPoundsPerVolunteer)} lbs</span>
                 </div>
                 <div class="result-item">
                     <span class="result-label">Average per Volunteer per Hour (All Groups):</span>
-                    <span class="result-value">${results.totalPoundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
+                    <span class="result-value">${formatNumber(results.totalPoundsPerVolunteerPerHour)} lbs/hour</span>
                 </div>
             `;
             html += '</div>';
@@ -542,15 +582,15 @@ function displayResults(results) {
         html += `
             <div class="result-item">
                 <span class="result-label">Total Pet Food Processed:</span>
-                <span class="result-value">${results.totalPounds.toFixed(2)} lbs</span>
+                <span class="result-value">${formatNumber(results.totalPounds)} lbs</span>
             </div>
             <div class="result-item">
                 <span class="result-label">Amount Processed per Volunteer:</span>
-                <span class="result-value">${results.poundsPerVolunteer.toFixed(2)} lbs</span>
+                <span class="result-value">${formatNumber(results.poundsPerVolunteer)} lbs</span>
             </div>
             <div class="result-item">
                 <span class="result-label">Amount Processed per Volunteer per Hour:</span>
-                <span class="result-value">${results.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
+                <span class="result-value">${formatNumber(results.poundsPerVolunteerPerHour)} lbs/hour</span>
             </div>
         `;
         html += '</div>';
@@ -633,14 +673,14 @@ function generateMarkdownTable(results) {
         markdown += `## Input Data\n\n`;
         markdown += `| Metric | Value |\n`;
         markdown += `|--------|-------|\n`;
-        markdown += `| Time Volunteered | ${results.durationHours.toFixed(2)} hours |\n\n`;
+        markdown += `| Time Volunteered | ${formatNumber(results.durationHours)} hours |\n\n`;
         
         markdown += `## Bags Processed\n\n`;
         markdown += `| Animal Type | Bag Number | Number of Bags | Pounds per Bag | Total Pounds |\n`;
         markdown += `|-------------|------------|----------------|----------------|-------------|\n`;
         
         results.bagResults.forEach((bag) => {
-            markdown += `| ${bag.type} | Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${bag.total.toFixed(2)} lbs |\n`;
+            markdown += `| ${bag.type} | Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${formatNumber(bag.total)} lbs |\n`;
         });
         
         // Per-group results
@@ -649,7 +689,7 @@ function generateMarkdownTable(results) {
         markdown += `|------------|------------|------------------|------------------|\n`;
         
         results.groupResults.forEach((groupResult) => {
-            markdown += `| ${groupResult.groupName} | ${groupResult.numVolunteers} | ${groupResult.poundsPerVolunteer.toFixed(2)} lbs | ${groupResult.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour |\n`;
+            markdown += `| ${groupResult.groupName} | ${groupResult.numVolunteers} | ${formatNumber(groupResult.poundsPerVolunteer)} lbs | ${formatNumber(groupResult.poundsPerVolunteerPerHour)} lbs/hour |\n`;
         });
         
         // Combined totals if multiple groups
@@ -657,10 +697,10 @@ function generateMarkdownTable(results) {
             markdown += `\n## Combined Totals\n\n`;
             markdown += `| Metric | Value |\n`;
             markdown += `|--------|-------|\n`;
-            markdown += `| Total Pet Food Processed | ${results.totalPounds.toFixed(2)} lbs |\n`;
+            markdown += `| Total Pet Food Processed | ${formatNumber(results.totalPounds)} lbs |\n`;
             markdown += `| Total Volunteers | ${results.totalVolunteers} |\n`;
-            markdown += `| Average per Volunteer | ${results.totalPoundsPerVolunteer.toFixed(2)} lbs |\n`;
-            markdown += `| Average per Volunteer per Hour | ${results.totalPoundsPerVolunteerPerHour.toFixed(2)} lbs/hour |\n`;
+            markdown += `| Average per Volunteer | ${formatNumber(results.totalPoundsPerVolunteer)} lbs |\n`;
+            markdown += `| Average per Volunteer per Hour | ${formatNumber(results.totalPoundsPerVolunteerPerHour)} lbs/hour |\n`;
         }
         
         return markdown;
@@ -673,22 +713,22 @@ function generateMarkdownTable(results) {
     markdown += `|--------|-------|\n`;
     markdown += `| Volunteer Group | ${results.groupName} |\n`;
     markdown += `| Number of Volunteers | ${results.numVolunteers} |\n`;
-    markdown += `| Time Volunteered | ${results.durationHours.toFixed(2)} hours |\n\n`;
+    markdown += `| Time Volunteered | ${formatNumber(results.durationHours)} hours |\n\n`;
     
     markdown += `## Bags Processed\n\n`;
     markdown += `| Animal Type | Bag Number | Number of Bags | Pounds per Bag | Total Pounds |\n`;
     markdown += `|-------------|------------|----------------|----------------|-------------|\n`;
     
     results.bagResults.forEach((bag) => {
-        markdown += `| ${bag.type} | Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${bag.total.toFixed(2)} lbs |\n`;
+        markdown += `| ${bag.type} | Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${formatNumber(bag.total)} lbs |\n`;
     });
     
     markdown += `\n## Summary Results\n\n`;
     markdown += `| Metric | Value |\n`;
     markdown += `|--------|-------|\n`;
-    markdown += `| Total Pet Food Processed | ${results.totalPounds.toFixed(2)} lbs |\n`;
-    markdown += `| Amount per Volunteer | ${results.poundsPerVolunteer.toFixed(2)} lbs |\n`;
-    markdown += `| Amount per Volunteer per Hour | ${results.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour |\n`;
+    markdown += `| Total Pet Food Processed | ${formatNumber(results.totalPounds)} lbs |\n`;
+    markdown += `| Amount per Volunteer | ${formatNumber(results.poundsPerVolunteer)} lbs |\n`;
+    markdown += `| Amount per Volunteer per Hour | ${formatNumber(results.poundsPerVolunteerPerHour)} lbs/hour |\n`;
     
     return markdown;
 }
@@ -759,28 +799,7 @@ async function copyResultsToClipboard() {
     }
     
     const markdown = generateMarkdownTable(window.calculationResults);
-    
-    try {
-        await navigator.clipboard.writeText(markdown);
-        showCopyFeedback();
-    } catch (err) {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = markdown;
-        textArea.style.position = 'fixed';
-        textArea.style.opacity = '0';
-        document.body.appendChild(textArea);
-        textArea.select();
-        
-        try {
-            document.execCommand('copy');
-            showCopyFeedback();
-        } catch (err) {
-            alert('Failed to copy to clipboard. Please try again.');
-        }
-        
-        document.body.removeChild(textArea);
-    }
+    await copyToClipboardLegacy(markdown);
 }
 
 // Copy entries to spreadsheet (TSV format)
@@ -796,21 +815,16 @@ async function copyEntriesToSpreadsheet() {
     // Check if this is multiple groups or single group
     if (results.groupResults && results.groupResults.length > 0) {
         // Multiple groups - copy all group entries
-        tsvData = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+        tsvData = TSV_HEADER;
         
         results.groupResults.forEach(groupResult => {
             const date = new Date();
             const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
             
             // Format bag types
-            let bagTypesStr = '';
-            if (groupResult.bagResults && groupResult.bagResults.length > 0) {
-                bagTypesStr = groupResult.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
-            } else {
-                bagTypesStr = 'N/A';
-            }
+            const bagTypesStr = formatBagTypes(groupResult.bagResults);
             
-            tsvData += `${groupResult.groupName}\t${formattedDate}\t${groupResult.numVolunteers}\t${groupResult.durationHours.toFixed(2)}\t${bagTypesStr}\t${groupResult.totalPounds.toFixed(2)}\t${groupResult.poundsPerVolunteer.toFixed(2)}\t${groupResult.poundsPerVolunteerPerHour.toFixed(2)}\n`;
+            tsvData += `${groupResult.groupName}\t${formattedDate}\t${groupResult.numVolunteers}\t${formatNumber(groupResult.durationHours)}\t${bagTypesStr}\t${formatNumber(groupResult.totalPounds)}\t${formatNumber(groupResult.poundsPerVolunteer)}\t${formatNumber(groupResult.poundsPerVolunteerPerHour)}\n`;
         });
     } else {
         // Single group - copy as one entry
@@ -818,24 +832,24 @@ async function copyEntriesToSpreadsheet() {
         const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
         
         // Format bag types
-        let bagTypesStr = '';
-        if (results.bagResults && results.bagResults.length > 0) {
-            bagTypesStr = results.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
-        } else {
-            bagTypesStr = 'N/A';
-        }
+        const bagTypesStr = formatBagTypes(results.bagResults);
         
-        tsvData = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
-        tsvData += `${results.groupName}\t${formattedDate}\t${results.numVolunteers}\t${results.durationHours.toFixed(2)}\t${bagTypesStr}\t${results.totalPounds.toFixed(2)}\t${results.poundsPerVolunteer.toFixed(2)}\t${results.poundsPerVolunteerPerHour.toFixed(2)}`;
+        tsvData = TSV_HEADER;
+        tsvData += `${results.groupName}\t${formattedDate}\t${results.numVolunteers}\t${formatNumber(results.durationHours)}\t${bagTypesStr}\t${formatNumber(results.totalPounds)}\t${formatNumber(results.poundsPerVolunteer)}\t${formatNumber(results.poundsPerVolunteerPerHour)}`;
     }
     
+    await copyToClipboardLegacy(tsvData);
+}
+
+// Copy to clipboard helper for legacy feedback system
+async function copyToClipboardLegacy(text) {
     try {
-        await navigator.clipboard.writeText(tsvData);
+        await navigator.clipboard.writeText(text);
         showCopyFeedback();
     } catch (err) {
         // Fallback for older browsers
         const textArea = document.createElement('textarea');
-        textArea.value = tsvData;
+        textArea.value = text;
         textArea.style.position = 'fixed';
         textArea.style.opacity = '0';
         document.body.appendChild(textArea);
@@ -965,12 +979,7 @@ function refreshGroupList() {
     });
     
     // Clear the data table and summary
-    document.getElementById('dataTableBody').innerHTML = '';
-    document.getElementById('dataViewerActions').style.display = 'none';
-    const summaryDiv = document.getElementById('groupSummary');
-    if (summaryDiv) {
-        summaryDiv.style.display = 'none';
-    }
+    clearDataViewerUI();
 }
 
 function loadGroupData() {
@@ -978,12 +987,7 @@ function loadGroupData() {
     const selectedGroup = groupSelect.value;
     
     if (!selectedGroup) {
-        document.getElementById('dataTableBody').innerHTML = '';
-        document.getElementById('dataViewerActions').style.display = 'none';
-        const summaryDiv = document.getElementById('groupSummary');
-        if (summaryDiv) {
-            summaryDiv.style.display = 'none';
-        }
+        clearDataViewerUI();
         return;
     }
     
@@ -1035,7 +1039,7 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
             <div class="summary-stats">
                 <div class="stat-item">
                     <span class="stat-label">Total Pet Food Processed:</span>
-                    <span class="stat-value">${totalPounds.toFixed(2)} lbs</span>
+                    <span class="stat-value">${formatNumber(totalPounds)} lbs</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">Total Entries:</span>
@@ -1043,7 +1047,7 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">Avg Pounds/Volunteer/Hour:</span>
-                    <span class="stat-value">${avgPoundsPerVolPerHour.toFixed(2)} lbs/hour</span>
+                    <span class="stat-value">${formatNumber(avgPoundsPerVolPerHour)} lbs/hour</span>
                 </div>
             </div>
         `;
@@ -1055,15 +1059,10 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
     entries.forEach((entry, index) => {
         const row = document.createElement('tr');
         const date = new Date(entry.timestamp);
-        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        const formattedDate = formatTimestamp(entry.timestamp);
         
         // Format bag types
-        let bagTypesStr = '';
-        if (entry.bagResults && entry.bagResults.length > 0) {
-            bagTypesStr = entry.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
-        } else {
-            bagTypesStr = 'N/A';
-        }
+        const bagTypesStr = formatBagTypes(entry.bagResults);
         
         // For "All Groups" view, disable delete and modify copy
         const actionButtons = isAllGroups
@@ -1075,11 +1074,11 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
             <td>${index + 1}</td>
             <td>${formattedDate}</td>
             <td>${entry.numVolunteers}</td>
-            <td>${entry.durationHours.toFixed(2)}</td>
+            <td>${formatNumber(entry.durationHours)}</td>
             <td>${bagTypesStr}</td>
-            <td>${entry.totalPounds.toFixed(2)}</td>
-            <td>${entry.poundsPerVolunteer.toFixed(2)}</td>
-            <td>${entry.poundsPerVolunteerPerHour.toFixed(2)}</td>
+            <td>${formatNumber(entry.totalPounds)}</td>
+            <td>${formatNumber(entry.poundsPerVolunteer)}</td>
+            <td>${formatNumber(entry.poundsPerVolunteerPerHour)}</td>
             <td class="action-buttons">
                 ${actionButtons}
             </td>
@@ -1156,40 +1155,28 @@ function copyAllEntriesToClipboard() {
 
 // Generate TSV (Tab-Separated Values) for a single entry
 function generateEntryTSV(entry) {
-    const date = new Date(entry.timestamp);
-    const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    const formattedDate = formatTimestamp(entry.timestamp);
     
     // Format bag types
-    let bagTypesStr = '';
-    if (entry.bagResults && entry.bagResults.length > 0) {
-        bagTypesStr = entry.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
-    } else {
-        bagTypesStr = 'N/A';
-    }
+    const bagTypesStr = formatBagTypes(entry.bagResults);
     
-    let tsv = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
-    tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${bagTypesStr}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}`;
+    let tsv = TSV_HEADER;
+    tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${formatNumber(entry.durationHours)}\t${bagTypesStr}\t${formatNumber(entry.totalPounds)}\t${formatNumber(entry.poundsPerVolunteer)}\t${formatNumber(entry.poundsPerVolunteerPerHour)}`;
     
     return tsv;
 }
 
 // Generate TSV for all entries
 function generateAllEntriesTSV(entries) {
-    let tsv = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+    let tsv = TSV_HEADER;
     
     entries.forEach(entry => {
-        const date = new Date(entry.timestamp);
-        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        const formattedDate = formatTimestamp(entry.timestamp);
         
         // Format bag types
-        let bagTypesStr = '';
-        if (entry.bagResults && entry.bagResults.length > 0) {
-            bagTypesStr = entry.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
-        } else {
-            bagTypesStr = 'N/A';
-        }
+        const bagTypesStr = formatBagTypes(entry.bagResults);
         
-        tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${bagTypesStr}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}\n`;
+        tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${formatNumber(entry.durationHours)}\t${bagTypesStr}\t${formatNumber(entry.totalPounds)}\t${formatNumber(entry.poundsPerVolunteer)}\t${formatNumber(entry.poundsPerVolunteerPerHour)}\n`;
     });
     
     return tsv;
