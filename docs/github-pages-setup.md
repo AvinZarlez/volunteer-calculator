@@ -83,7 +83,7 @@ If needed, you can manually trigger a deployment:
 
 - `.github/workflows/deploy.yml` - Deployment workflow
 - `.nojekyll` - Prevents Jekyll processing
-- `docs/GITHUB_PAGES_SETUP.md` - This setup guide
+- `docs/github-pages-setup.md` - This setup guide
 
 ## Additional Resources
 

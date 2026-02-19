@@ -35,16 +35,18 @@ Visit [https://avinzarlez.github.io/volunteer-calculator/](https://avinzarlez.gi
 ### Running Locally
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/AvinZarlez/volunteer-calculator.git
    cd volunteer-calculator
    ```
 
 2. Open `index.html` in your web browser, or use a local server:
+
    ```bash
    # Using Python 3
    python -m http.server 8000
-   
+
    # Using Node.js (with http-server package)
    npx http-server
    ```
@@ -93,22 +95,26 @@ Visit [https://avinzarlez.github.io/volunteer-calculator/](https://avinzarlez.gi
 ### Step 5: Export Results (Optional)
 
 Click **"📋 Copy Results as Markdown Table"** to copy a formatted table to your clipboard. Paste it into:
+
 - GitHub issues or pull requests
 - Markdown documents
 - Team reports
 - Email messages
 
 From the Data Viewer, you can also:
+
 - Copy individual entries in tab-separated format for spreadsheets
 - Copy all entries for a group at once
 
 ## 📊 Example Usage
 
 **Scenario**: A team of 8 volunteers worked for 2.5 hours and processed:
+
 - 20 bags of 25 lbs each
 - 15 bags of 50 lbs each
 
 **Results**:
+
 - Bag Type 1: 500 lbs
 - Bag Type 2: 750 lbs
 - Total: 1,250 lbs
@@ -137,6 +143,7 @@ npm run lint
 All tests and linting run automatically via GitHub Actions on every push and pull request. The CI pipeline ensures code quality and test coverage before merging.
 
 **Test Coverage:**
+
 - Time conversion (6 tests)
 - Calculations (6 tests)
 - Markdown generation (5 tests)
@@ -152,7 +159,7 @@ All tests and linting run automatically via GitHub Actions on every push and pul
   - [Core Components](docs/components.md)
   - [Calculation Algorithms](docs/calculations.md)
   - [Testing Strategy](docs/testing.md)
-  - [GitHub Pages Setup](docs/GITHUB_PAGES_SETUP.md)
+  - [GitHub Pages Setup](docs/github-pages-setup.md)
   - [Browser Compatibility](docs/browser-compatibility.md)
   - [Customization Guide](docs/customization.md)
 - **Agent Instructions**: See [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md) for AI agent guidance
