@@ -1057,9 +1057,21 @@ footer a:hover {
 .cloud-sync-bar {
     margin-top: 12px;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
+}
+
+.sync-error-detail {
+    background: rgba(255, 80, 80, 0.2);
+    border: 1px solid rgba(255, 180, 180, 0.5);
+    color: white;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    max-width: 500px;
+    text-align: center;
+    line-height: 1.4;
 }
 
 .btn-cloud-sync {

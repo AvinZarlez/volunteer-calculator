@@ -119,7 +119,7 @@ const CloudSyncModule = (function() {
             updateSyncStatus('synced');
         } catch (e) {
             console.error('Failed to sync to cloud:', e);
-            updateSyncStatus('error');
+            updateSyncStatus('error', getSyncErrorMessage(e));
         } finally {
             isSyncing = false;
         }
@@ -157,7 +157,7 @@ const CloudSyncModule = (function() {
             updateSyncStatus('synced');
         } catch (e) {
             console.error('Failed to sync from cloud:', e);
-            updateSyncStatus('error');
+            updateSyncStatus('error', getSyncErrorMessage(e));
         }
     }
 
@@ -193,7 +193,7 @@ const CloudSyncModule = (function() {
             },
             (error) => {
                 console.error('Real-time listener error:', error);
-                updateSyncStatus('error');
+                updateSyncStatus('error', getSyncErrorMessage(error));
             }
         );
     }
@@ -271,8 +271,9 @@ const CloudSyncModule = (function() {
     }
 
     // Update the sync status badge text and style
-    function updateSyncStatus(status) {
+    function updateSyncStatus(status, detail) {
         const indicator = document.getElementById('syncStatusIndicator');
+        const errorDetail = document.getElementById('syncErrorDetail');
         if (!indicator) {
             return;
         }
@@ -287,6 +288,17 @@ const CloudSyncModule = (function() {
         const info = statusMap[status] || statusMap.idle;
         indicator.textContent = info.text;
         indicator.className = 'sync-status ' + info.cls;
+        indicator.title = detail || '';
+
+        if (errorDetail) {
+            if (status === 'error' && detail) {
+                errorDetail.textContent = detail;
+                errorDetail.style.display = 'block';
+            } else {
+                errorDetail.style.display = 'none';
+                errorDetail.textContent = '';
+            }
+        }
     }
 
     // Human-readable messages for common Firebase auth error codes
@@ -312,6 +324,26 @@ const CloudSyncModule = (function() {
         }
         console.error('Unhandled Firebase auth error code:', code);
         return `Authentication error (${code}). Please check the browser console for details.`;
+    }
+
+    // Human-readable messages for common Firestore error codes
+    function getSyncErrorMessage(e) {
+        const code = e && (e.code || '');
+        const messages = {
+            'permission-denied': 'Firestore permission denied. Make sure you have set the correct security rules in the Firebase console (see firebase-config.js setup instructions).',
+            'failed-precondition': 'Firestore database not found or not ready. Go to Firebase console → Build → Firestore Database and create a database.',
+            'unavailable': 'Firestore service is temporarily unavailable. Please check your internet connection and try again.',
+            'unauthenticated': 'Firestore request is unauthenticated. Please sign out and sign in again.',
+            'resource-exhausted': 'Firebase quota exceeded. Your free tier limits may have been reached.',
+            'not-found': 'Firestore document not found. This is unexpected — try signing out and back in.'
+        };
+        const shortCode = code.replace('firestore/', '');
+        const msg = messages[shortCode] || messages[code];
+        if (msg) {
+            return msg;
+        }
+        console.error('Firestore sync error:', e);
+        return `Sync failed (${code || 'unknown error'}). Check the browser console for details.`;
     }
 
     // ---- Modal helpers (called from inline HTML onclick handlers) ----
