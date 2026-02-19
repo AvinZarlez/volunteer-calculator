@@ -1,56 +1,46 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Start Local Server (Python)",
-            "type": "shell",
-            "command": "python3 -m http.server 8000",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "Start Local Server (Node)",
-            "type": "shell",
-            "command": "npx http-server -p 8000",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Open in Browser",
-            "type": "shell",
-            "command": "open http://localhost:8000 || xdg-open http://localhost:8000 || start http://localhost:8000",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "silent"
-            }
-        },
-        {
-            "label": "Open Tests in Browser",
-            "type": "shell",
-            "command": "open http://localhost:8000/test.html || xdg-open http://localhost:8000/test.html || start http://localhost:8000/test.html",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "silent"
-            }
-        },
-        {
-            "label": "Start Development",
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Start Local Server (Python)",
-                "Open in Browser"
-            ],
-            "problemMatcher": []
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Local Server (Python)",
+      "type": "shell",
+      "command": "python3 -m http.server 8000",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Start Local Server (Node)",
+      "type": "shell",
+      "command": "npx http-server -p 8000",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Open in Browser",
+      "type": "shell",
+      "command": "open http://localhost:8000 || xdg-open http://localhost:8000 || start http://localhost:8000",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Run Application",
+      "dependsOrder": "parallel",
+      "dependsOn": ["Start Local Server (Python)", "Open in Browser"],
+      "problemMatcher": []
+    }
+  ]
 }
