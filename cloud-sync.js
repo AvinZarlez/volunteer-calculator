@@ -184,10 +184,10 @@ const CloudSyncModule = (function() {
                     return;
                 }
 
+                // Use cloud data directly — cloud is the authoritative source for
+                // real-time updates so that deletions on other devices propagate correctly.
                 const cloudData = snapshot.data().entries || {};
-                const localData = StorageModule.getAll();
-                const merged = mergeData(localData, cloudData);
-                StorageModule.importAll(merged);
+                StorageModule.importAll(cloudData);
                 refreshUI();
                 updateSyncStatus('synced');
             },

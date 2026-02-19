@@ -1063,7 +1063,13 @@ function initializeViewSwitching() {
     
     const refreshBtn = document.getElementById('refreshGroupsBtn');
     if (refreshBtn) {
-        refreshBtn.addEventListener('click', refreshGroupList);
+        refreshBtn.addEventListener('click', function() {
+            if (typeof CloudSyncModule !== 'undefined' && CloudSyncModule.isLoggedIn()) {
+                CloudSyncModule.syncFromCloud();
+            } else {
+                refreshGroupList();
+            }
+        });
     }
     
     // Initialize date filter components
