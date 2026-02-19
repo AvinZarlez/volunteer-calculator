@@ -1541,10 +1541,13 @@ function importDataFromCSV(csvContent) {
             
             // Parse date - try to preserve original timestamp or create new one
             let timestamp;
-            try {
-                timestamp = new Date(dateStr).toISOString();
-            } catch (e) {
+            const parsedDate = new Date(dateStr);
+            if (!isNaN(parsedDate.getTime())) {
+                timestamp = parsedDate.toISOString();
+            } else {
+                // Use current date but log a warning
                 timestamp = new Date().toISOString();
+                console.warn(`Line ${i + 1}: Could not parse date "${dateStr}", using current date`);
             }
             
             // Create entry object
