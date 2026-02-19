@@ -1299,16 +1299,18 @@ function copyAllEntriesToClipboard() {
         return;
     }
     
+    // Get all entries and apply date filter
     const entries = StorageModule.getGroup(selectedGroup);
+    const filteredEntries = filterEntriesByDate(entries);
     
-    if (entries.length === 0) {
-        showFeedback('No entries to copy', 'error');
+    if (filteredEntries.length === 0) {
+        showFeedback('No entries to copy in the selected date range', 'error');
         return;
     }
     
-    const tsvData = generateAllEntriesTSV(entries);
+    const tsvData = generateAllEntriesTSV(filteredEntries);
     
-    copyToClipboard(tsvData, `All ${entries.length} entries copied to clipboard! You can paste them into Excel or Google Sheets.`);
+    copyToClipboard(tsvData, `${filteredEntries.length} entries copied to clipboard! You can paste them into Excel or Google Sheets.`);
 }
 
 // Generate CSV for group entries
@@ -1333,15 +1335,17 @@ function downloadGroupEntriesAsCSV() {
         return;
     }
     
+    // Get all entries and apply date filter
     const entries = StorageModule.getGroup(selectedGroup);
+    const filteredEntries = filterEntriesByDate(entries);
     
-    if (entries.length === 0) {
-        showFeedback('No entries to download', 'error');
+    if (filteredEntries.length === 0) {
+        showFeedback('No entries to download in the selected date range', 'error');
         return;
     }
     
     try {
-        const csv = generateGroupEntriesCSV(entries);
+        const csv = generateGroupEntriesCSV(filteredEntries);
         
         // Create a blob and download link
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1364,7 +1368,7 @@ function downloadGroupEntriesAsCSV() {
         link.click();
         document.body.removeChild(link);
         
-        showFeedback(`Downloaded ${entries.length} entries for ${selectedGroup}!`, 'success');
+        showFeedback(`Downloaded ${filteredEntries.length} entries for ${selectedGroup}!`, 'success');
     } catch (err) {
         console.error('Download failed:', err);
         showFeedback('Failed to download entries', 'error');
@@ -1709,9 +1713,9 @@ function mergeImportedData(existingData, newData) {
     return { mergedData, addedCount, skippedCount };
 }
 
-// Handle file import
+// Handle file import - ADD mode
 // eslint-disable-next-line no-unused-vars
-function handleImportFile() {
+function handleImportAddMode() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.csv';
@@ -1727,38 +1731,59 @@ function handleImportFile() {
             const entryCount = Object.values(newData).reduce((sum, entries) => sum + entries.length, 0);
             const groupCount = Object.keys(newData).length;
             
-            // Ask user if they want to REPLACE or ADD
-            const isAddMode = confirm(
-                `Found ${entryCount} entries across ${groupCount} groups.\n\n` +
-                `Click OK to ADD to existing data (duplicates will be skipped)\n` +
-                `Click Cancel to REPLACE all existing data`
-            );
+            // ADD mode - merge with existing data
+            const existingData = StorageModule.getAll();
+            const { mergedData, addedCount, skippedCount } = mergeImportedData(existingData, newData);
             
-            if (isAddMode) {
-                // ADD mode - merge with existing data
-                const existingData = StorageModule.getAll();
-                const { mergedData, addedCount, skippedCount } = mergeImportedData(existingData, newData);
-                
-                // Confirm before proceeding
-                const confirmMsg = `This will add ${addedCount} new entries. ${skippedCount} duplicate(s) will be skipped. Continue?`;
-                if (!confirm(confirmMsg)) {
-                    showFeedback('Import cancelled', 'error');
-                    return;
-                }
-                
-                StorageModule.importAll(mergedData);
-                showFeedback(`Successfully added ${addedCount} entries! (${skippedCount} duplicates skipped)`, 'success');
-            } else {
-                // REPLACE mode - replace all data
-                const confirmMsg = `This will REPLACE all existing data with ${entryCount} entries. Continue?`;
-                if (!confirm(confirmMsg)) {
-                    showFeedback('Import cancelled', 'error');
-                    return;
-                }
-                
-                StorageModule.importAll(newData);
-                showFeedback(`Successfully imported ${entryCount} entries!`, 'success');
+            // Confirm before proceeding
+            const confirmMsg = `Found ${entryCount} entries across ${groupCount} groups.\n\nThis will ADD ${addedCount} new entries to your existing data.\n${skippedCount} duplicate(s) will be skipped.\n\nContinue?`;
+            if (!confirm(confirmMsg)) {
+                showFeedback('Import cancelled', 'error');
+                return;
             }
+            
+            StorageModule.importAll(mergedData);
+            showFeedback(`Successfully added ${addedCount} entries! (${skippedCount} duplicates skipped)`, 'success');
+            
+            // Refresh the data viewer
+            refreshGroupList();
+            
+        } catch (err) {
+            console.error('Import failed:', err);
+            showFeedback('Import failed: ' + err.message, 'error');
+        }
+    };
+    
+    input.click();
+}
+
+// Handle file import - REPLACE mode
+// eslint-disable-next-line no-unused-vars
+function handleImportReplaceMode() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+            const text = await file.text();
+            const newData = importDataFromCSV(text);
+            
+            const entryCount = Object.values(newData).reduce((sum, entries) => sum + entries.length, 0);
+            const groupCount = Object.keys(newData).length;
+            
+            // REPLACE mode - confirm before proceeding
+            const confirmMsg = `Found ${entryCount} entries across ${groupCount} groups.\n\n⚠️ WARNING: This will REPLACE ALL existing data!\n\nAll current entries will be permanently deleted and replaced with the imported data.\n\nAre you sure you want to continue?`;
+            if (!confirm(confirmMsg)) {
+                showFeedback('Import cancelled', 'error');
+                return;
+            }
+            
+            StorageModule.importAll(newData);
+            showFeedback(`Successfully replaced all data with ${entryCount} entries!`, 'success');
             
             // Refresh the data viewer
             refreshGroupList();

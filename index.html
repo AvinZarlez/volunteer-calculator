@@ -192,11 +192,35 @@
                             <span id="dataManagementToggle" class="toggle-icon">▶</span> Data Management
                         </h3>
                         <div id="dataManagementContent" class="management-content" style="display: none;">
-                            <div class="management-buttons">
-                                <button type="button" onclick="exportAllDataToCSV()" class="btn-primary">📥 Export All Data</button>
-                                <button type="button" onclick="handleImportFile()" class="btn-secondary">📤 Import Data</button>
+                            <div class="management-section">
+                                <h4>Export Data</h4>
+                                <button type="button" onclick="exportAllDataToCSV()" class="btn-export">📥 Export All Data to CSV</button>
+                                <p class="section-note">Download all stored volunteer data as a CSV file</p>
                             </div>
-                            <p class="management-note"><strong>⚠️ Warning:</strong> Export creates a CSV file with all stored data. During import, you will choose to either <strong>add to</strong> existing data (skipping duplicates) or <strong>replace all existing data</strong> with the CSV file contents.</p>
+                            
+                            <div class="management-section">
+                                <h4>Import Data</h4>
+                                <div class="import-buttons">
+                                    <button type="button" onclick="handleImportAddMode()" class="btn-import-add">
+                                        <span class="btn-icon">➕</span>
+                                        <span class="btn-text">
+                                            <strong>Add to Existing</strong>
+                                            <small>Merge with current data</small>
+                                        </span>
+                                    </button>
+                                    <button type="button" onclick="handleImportReplaceMode()" class="btn-import-replace">
+                                        <span class="btn-icon">🔄</span>
+                                        <span class="btn-text">
+                                            <strong>Replace All</strong>
+                                            <small>Delete & replace all data</small>
+                                        </span>
+                                    </button>
+                                </div>
+                                <p class="section-note">
+                                    <strong>Add to Existing:</strong> Imports CSV data and merges with your current entries (duplicates skipped)<br>
+                                    <strong>Replace All:</strong> ⚠️ Permanently deletes all current data and replaces it with the CSV file
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </section>
