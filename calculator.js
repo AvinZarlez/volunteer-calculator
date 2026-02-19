@@ -516,7 +516,7 @@ function displayResults(results) {
         html += `
             <div class="result-item">
                 <span class="result-label">${bag.type} - Bag Type ${bag.bagType} (${bag.count} bags × ${bag.weight} lbs):</span>
-                <span class="result-value">${bag.total.toFixed(2)} lbs</span>
+                <span class="result-value">${formatNumber(bag.total)} lbs</span>
             </div>
         `;
     });
@@ -536,11 +536,11 @@ function displayResults(results) {
                 </div>
                 <div class="result-item">
                     <span class="result-label">Amount Processed per Volunteer:</span>
-                    <span class="result-value">${groupResult.poundsPerVolunteer.toFixed(2)} lbs</span>
+                    <span class="result-value">${formatNumber(groupResult.poundsPerVolunteer)} lbs</span>
                 </div>
                 <div class="result-item">
                     <span class="result-label">Amount Processed per Volunteer per Hour:</span>
-                    <span class="result-value">${groupResult.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
+                    <span class="result-value">${formatNumber(groupResult.poundsPerVolunteerPerHour)} lbs/hour</span>
                 </div>
             `;
             html += '</div>';
@@ -553,7 +553,7 @@ function displayResults(results) {
             html += `
                 <div class="result-item">
                     <span class="result-label">Total Pet Food Processed:</span>
-                    <span class="result-value">${results.totalPounds.toFixed(2)} lbs</span>
+                    <span class="result-value">${formatNumber(results.totalPounds)} lbs</span>
                 </div>
                 <div class="result-item">
                     <span class="result-label">Total Volunteers (All Groups):</span>
@@ -561,11 +561,11 @@ function displayResults(results) {
                 </div>
                 <div class="result-item">
                     <span class="result-label">Average per Volunteer (All Groups):</span>
-                    <span class="result-value">${results.totalPoundsPerVolunteer.toFixed(2)} lbs</span>
+                    <span class="result-value">${formatNumber(results.totalPoundsPerVolunteer)} lbs</span>
                 </div>
                 <div class="result-item">
                     <span class="result-label">Average per Volunteer per Hour (All Groups):</span>
-                    <span class="result-value">${results.totalPoundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
+                    <span class="result-value">${formatNumber(results.totalPoundsPerVolunteerPerHour)} lbs/hour</span>
                 </div>
             `;
             html += '</div>';
@@ -577,15 +577,15 @@ function displayResults(results) {
         html += `
             <div class="result-item">
                 <span class="result-label">Total Pet Food Processed:</span>
-                <span class="result-value">${results.totalPounds.toFixed(2)} lbs</span>
+                <span class="result-value">${formatNumber(results.totalPounds)} lbs</span>
             </div>
             <div class="result-item">
                 <span class="result-label">Amount Processed per Volunteer:</span>
-                <span class="result-value">${results.poundsPerVolunteer.toFixed(2)} lbs</span>
+                <span class="result-value">${formatNumber(results.poundsPerVolunteer)} lbs</span>
             </div>
             <div class="result-item">
                 <span class="result-label">Amount Processed per Volunteer per Hour:</span>
-                <span class="result-value">${results.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour</span>
+                <span class="result-value">${formatNumber(results.poundsPerVolunteerPerHour)} lbs/hour</span>
             </div>
         `;
         html += '</div>';
@@ -668,14 +668,14 @@ function generateMarkdownTable(results) {
         markdown += `## Input Data\n\n`;
         markdown += `| Metric | Value |\n`;
         markdown += `|--------|-------|\n`;
-        markdown += `| Time Volunteered | ${results.durationHours.toFixed(2)} hours |\n\n`;
+        markdown += `| Time Volunteered | ${formatNumber(results.durationHours)} hours |\n\n`;
         
         markdown += `## Bags Processed\n\n`;
         markdown += `| Animal Type | Bag Number | Number of Bags | Pounds per Bag | Total Pounds |\n`;
         markdown += `|-------------|------------|----------------|----------------|-------------|\n`;
         
         results.bagResults.forEach((bag) => {
-            markdown += `| ${bag.type} | Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${bag.total.toFixed(2)} lbs |\n`;
+            markdown += `| ${bag.type} | Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${formatNumber(bag.total)} lbs |\n`;
         });
         
         // Per-group results
@@ -684,7 +684,7 @@ function generateMarkdownTable(results) {
         markdown += `|------------|------------|------------------|------------------|\n`;
         
         results.groupResults.forEach((groupResult) => {
-            markdown += `| ${groupResult.groupName} | ${groupResult.numVolunteers} | ${groupResult.poundsPerVolunteer.toFixed(2)} lbs | ${groupResult.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour |\n`;
+            markdown += `| ${groupResult.groupName} | ${groupResult.numVolunteers} | ${formatNumber(groupResult.poundsPerVolunteer)} lbs | ${formatNumber(groupResult.poundsPerVolunteerPerHour)} lbs/hour |\n`;
         });
         
         // Combined totals if multiple groups
@@ -692,10 +692,10 @@ function generateMarkdownTable(results) {
             markdown += `\n## Combined Totals\n\n`;
             markdown += `| Metric | Value |\n`;
             markdown += `|--------|-------|\n`;
-            markdown += `| Total Pet Food Processed | ${results.totalPounds.toFixed(2)} lbs |\n`;
+            markdown += `| Total Pet Food Processed | ${formatNumber(results.totalPounds)} lbs |\n`;
             markdown += `| Total Volunteers | ${results.totalVolunteers} |\n`;
-            markdown += `| Average per Volunteer | ${results.totalPoundsPerVolunteer.toFixed(2)} lbs |\n`;
-            markdown += `| Average per Volunteer per Hour | ${results.totalPoundsPerVolunteerPerHour.toFixed(2)} lbs/hour |\n`;
+            markdown += `| Average per Volunteer | ${formatNumber(results.totalPoundsPerVolunteer)} lbs |\n`;
+            markdown += `| Average per Volunteer per Hour | ${formatNumber(results.totalPoundsPerVolunteerPerHour)} lbs/hour |\n`;
         }
         
         return markdown;
@@ -708,22 +708,22 @@ function generateMarkdownTable(results) {
     markdown += `|--------|-------|\n`;
     markdown += `| Volunteer Group | ${results.groupName} |\n`;
     markdown += `| Number of Volunteers | ${results.numVolunteers} |\n`;
-    markdown += `| Time Volunteered | ${results.durationHours.toFixed(2)} hours |\n\n`;
+    markdown += `| Time Volunteered | ${formatNumber(results.durationHours)} hours |\n\n`;
     
     markdown += `## Bags Processed\n\n`;
     markdown += `| Animal Type | Bag Number | Number of Bags | Pounds per Bag | Total Pounds |\n`;
     markdown += `|-------------|------------|----------------|----------------|-------------|\n`;
     
     results.bagResults.forEach((bag) => {
-        markdown += `| ${bag.type} | Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${bag.total.toFixed(2)} lbs |\n`;
+        markdown += `| ${bag.type} | Type ${bag.bagType} | ${bag.count} | ${bag.weight} lbs | ${formatNumber(bag.total)} lbs |\n`;
     });
     
     markdown += `\n## Summary Results\n\n`;
     markdown += `| Metric | Value |\n`;
     markdown += `|--------|-------|\n`;
-    markdown += `| Total Pet Food Processed | ${results.totalPounds.toFixed(2)} lbs |\n`;
-    markdown += `| Amount per Volunteer | ${results.poundsPerVolunteer.toFixed(2)} lbs |\n`;
-    markdown += `| Amount per Volunteer per Hour | ${results.poundsPerVolunteerPerHour.toFixed(2)} lbs/hour |\n`;
+    markdown += `| Total Pet Food Processed | ${formatNumber(results.totalPounds)} lbs |\n`;
+    markdown += `| Amount per Volunteer | ${formatNumber(results.poundsPerVolunteer)} lbs |\n`;
+    markdown += `| Amount per Volunteer per Hour | ${formatNumber(results.poundsPerVolunteerPerHour)} lbs/hour |\n`;
     
     return markdown;
 }
@@ -845,7 +845,7 @@ async function copyEntriesToSpreadsheet() {
                 bagTypesStr = 'N/A';
             }
             
-            tsvData += `${groupResult.groupName}\t${formattedDate}\t${groupResult.numVolunteers}\t${groupResult.durationHours.toFixed(2)}\t${bagTypesStr}\t${groupResult.totalPounds.toFixed(2)}\t${groupResult.poundsPerVolunteer.toFixed(2)}\t${groupResult.poundsPerVolunteerPerHour.toFixed(2)}\n`;
+            tsvData += `${groupResult.groupName}\t${formattedDate}\t${groupResult.numVolunteers}\t${formatNumber(groupResult.durationHours)}\t${bagTypesStr}\t${formatNumber(groupResult.totalPounds)}\t${formatNumber(groupResult.poundsPerVolunteer)}\t${formatNumber(groupResult.poundsPerVolunteerPerHour)}\n`;
         });
     } else {
         // Single group - copy as one entry
@@ -861,7 +861,7 @@ async function copyEntriesToSpreadsheet() {
         }
         
         tsvData = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
-        tsvData += `${results.groupName}\t${formattedDate}\t${results.numVolunteers}\t${results.durationHours.toFixed(2)}\t${bagTypesStr}\t${results.totalPounds.toFixed(2)}\t${results.poundsPerVolunteer.toFixed(2)}\t${results.poundsPerVolunteerPerHour.toFixed(2)}`;
+        tsvData += `${results.groupName}\t${formattedDate}\t${results.numVolunteers}\t${formatNumber(results.durationHours)}\t${bagTypesStr}\t${formatNumber(results.totalPounds)}\t${formatNumber(results.poundsPerVolunteer)}\t${formatNumber(results.poundsPerVolunteerPerHour)}`;
     }
     
     try {
@@ -1070,7 +1070,7 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
             <div class="summary-stats">
                 <div class="stat-item">
                     <span class="stat-label">Total Pet Food Processed:</span>
-                    <span class="stat-value">${totalPounds.toFixed(2)} lbs</span>
+                    <span class="stat-value">${formatNumber(totalPounds)} lbs</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">Total Entries:</span>
@@ -1078,7 +1078,7 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">Avg Pounds/Volunteer/Hour:</span>
-                    <span class="stat-value">${avgPoundsPerVolPerHour.toFixed(2)} lbs/hour</span>
+                    <span class="stat-value">${formatNumber(avgPoundsPerVolPerHour)} lbs/hour</span>
                 </div>
             </div>
         `;
@@ -1110,11 +1110,11 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
             <td>${index + 1}</td>
             <td>${formattedDate}</td>
             <td>${entry.numVolunteers}</td>
-            <td>${entry.durationHours.toFixed(2)}</td>
+            <td>${formatNumber(entry.durationHours)}</td>
             <td>${bagTypesStr}</td>
-            <td>${entry.totalPounds.toFixed(2)}</td>
-            <td>${entry.poundsPerVolunteer.toFixed(2)}</td>
-            <td>${entry.poundsPerVolunteerPerHour.toFixed(2)}</td>
+            <td>${formatNumber(entry.totalPounds)}</td>
+            <td>${formatNumber(entry.poundsPerVolunteer)}</td>
+            <td>${formatNumber(entry.poundsPerVolunteerPerHour)}</td>
             <td class="action-buttons">
                 ${actionButtons}
             </td>
@@ -1203,7 +1203,7 @@ function generateEntryTSV(entry) {
     }
     
     let tsv = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
-    tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${bagTypesStr}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}`;
+    tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${formatNumber(entry.durationHours)}\t${bagTypesStr}\t${formatNumber(entry.totalPounds)}\t${formatNumber(entry.poundsPerVolunteer)}\t${formatNumber(entry.poundsPerVolunteerPerHour)}`;
     
     return tsv;
 }
@@ -1224,7 +1224,7 @@ function generateAllEntriesTSV(entries) {
             bagTypesStr = 'N/A';
         }
         
-        tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${entry.durationHours.toFixed(2)}\t${bagTypesStr}\t${entry.totalPounds.toFixed(2)}\t${entry.poundsPerVolunteer.toFixed(2)}\t${entry.poundsPerVolunteerPerHour.toFixed(2)}\n`;
+        tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${formatNumber(entry.durationHours)}\t${bagTypesStr}\t${formatNumber(entry.totalPounds)}\t${formatNumber(entry.poundsPerVolunteer)}\t${formatNumber(entry.poundsPerVolunteerPerHour)}\n`;
     });
     
     return tsv;
