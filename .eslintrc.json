@@ -21,6 +21,12 @@
     "bagCounter": "writable",
     "window": "readonly",
     "document": "readonly",
-    "navigator": "readonly"
+    "navigator": "readonly",
+    "firebase": "readonly",
+    "firebaseConfig": "readonly",
+    "CloudSyncModule": "readonly",
+    "StorageModule": "readonly",
+    "refreshGroupList": "readonly",
+    "loadGroupData": "readonly"
   }
 }
