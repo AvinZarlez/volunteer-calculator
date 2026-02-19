@@ -439,6 +439,55 @@ footer a:hover {
     color: white;
 }
 
+.date-filter-select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    background: white;
+}
+
+.custom-date-range {
+    margin-top: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 6px;
+    border: 2px solid #ddd;
+}
+
+.date-input-with-today {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.date-input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    background: white;
+}
+
+.btn-today {
+    padding: 10px 15px;
+    border: 2px solid #667eea;
+    background: white;
+    color: #667eea;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.btn-today:hover {
+    background: #667eea;
+    color: white;
+}
+
 .group-summary {
     margin-bottom: 20px;
     padding: 20px;
