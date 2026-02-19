@@ -831,19 +831,14 @@ async function copyEntriesToSpreadsheet() {
     // Check if this is multiple groups or single group
     if (results.groupResults && results.groupResults.length > 0) {
         // Multiple groups - copy all group entries
-        tsvData = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+        tsvData = TSV_HEADER;
         
         results.groupResults.forEach(groupResult => {
             const date = new Date();
             const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
             
             // Format bag types
-            let bagTypesStr = '';
-            if (groupResult.bagResults && groupResult.bagResults.length > 0) {
-                bagTypesStr = groupResult.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
-            } else {
-                bagTypesStr = 'N/A';
-            }
+            const bagTypesStr = formatBagTypes(groupResult.bagResults);
             
             tsvData += `${groupResult.groupName}\t${formattedDate}\t${groupResult.numVolunteers}\t${formatNumber(groupResult.durationHours)}\t${bagTypesStr}\t${formatNumber(groupResult.totalPounds)}\t${formatNumber(groupResult.poundsPerVolunteer)}\t${formatNumber(groupResult.poundsPerVolunteerPerHour)}\n`;
         });
@@ -853,14 +848,9 @@ async function copyEntriesToSpreadsheet() {
         const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
         
         // Format bag types
-        let bagTypesStr = '';
-        if (results.bagResults && results.bagResults.length > 0) {
-            bagTypesStr = results.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
-        } else {
-            bagTypesStr = 'N/A';
-        }
+        const bagTypesStr = formatBagTypes(results.bagResults);
         
-        tsvData = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+        tsvData = TSV_HEADER;
         tsvData += `${results.groupName}\t${formattedDate}\t${results.numVolunteers}\t${formatNumber(results.durationHours)}\t${bagTypesStr}\t${formatNumber(results.totalPounds)}\t${formatNumber(results.poundsPerVolunteer)}\t${formatNumber(results.poundsPerVolunteerPerHour)}`;
     }
     
@@ -1090,15 +1080,10 @@ function displayGroupEntries(groupName, entries, isAllGroups = false) {
     entries.forEach((entry, index) => {
         const row = document.createElement('tr');
         const date = new Date(entry.timestamp);
-        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        const formattedDate = formatTimestamp(entry.timestamp);
         
         // Format bag types
-        let bagTypesStr = '';
-        if (entry.bagResults && entry.bagResults.length > 0) {
-            bagTypesStr = entry.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
-        } else {
-            bagTypesStr = 'N/A';
-        }
+        const bagTypesStr = formatBagTypes(entry.bagResults);
         
         // For "All Groups" view, disable delete and modify copy
         const actionButtons = isAllGroups
@@ -1191,18 +1176,12 @@ function copyAllEntriesToClipboard() {
 
 // Generate TSV (Tab-Separated Values) for a single entry
 function generateEntryTSV(entry) {
-    const date = new Date(entry.timestamp);
-    const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    const formattedDate = formatTimestamp(entry.timestamp);
     
     // Format bag types
-    let bagTypesStr = '';
-    if (entry.bagResults && entry.bagResults.length > 0) {
-        bagTypesStr = entry.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
-    } else {
-        bagTypesStr = 'N/A';
-    }
+    const bagTypesStr = formatBagTypes(entry.bagResults);
     
-    let tsv = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+    let tsv = TSV_HEADER;
     tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${formatNumber(entry.durationHours)}\t${bagTypesStr}\t${formatNumber(entry.totalPounds)}\t${formatNumber(entry.poundsPerVolunteer)}\t${formatNumber(entry.poundsPerVolunteerPerHour)}`;
     
     return tsv;
@@ -1210,19 +1189,13 @@ function generateEntryTSV(entry) {
 
 // Generate TSV for all entries
 function generateAllEntriesTSV(entries) {
-    let tsv = 'Group Name\tDate\tVolunteers\tHours\tBag Types\tTotal Pounds\tPounds per Volunteer\tPounds per Volunteer per Hour\n';
+    let tsv = TSV_HEADER;
     
     entries.forEach(entry => {
-        const date = new Date(entry.timestamp);
-        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        const formattedDate = formatTimestamp(entry.timestamp);
         
         // Format bag types
-        let bagTypesStr = '';
-        if (entry.bagResults && entry.bagResults.length > 0) {
-            bagTypesStr = entry.bagResults.map(bag => `${bag.type || DEFAULT_BAG_TYPE} (${bag.count})`).join(', ');
-        } else {
-            bagTypesStr = 'N/A';
-        }
+        const bagTypesStr = formatBagTypes(entry.bagResults);
         
         tsv += `${entry.groupName}\t${formattedDate}\t${entry.numVolunteers}\t${formatNumber(entry.durationHours)}\t${bagTypesStr}\t${formatNumber(entry.totalPounds)}\t${formatNumber(entry.poundsPerVolunteer)}\t${formatNumber(entry.poundsPerVolunteerPerHour)}\n`;
     });
