@@ -1,238 +1,392 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Volunteer Calculator</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <h1>🐾 Volunteer Calculator</h1>
-            <p class="subtitle">Calculate pet food packing volunteer effort</p>
-            
-            <nav class="view-nav">
-                <button id="navCalculator" class="nav-btn active">Calculator</button>
-                <button id="navDataViewer" class="nav-btn">Data Viewer</button>
-            </nav>
-        </header>
+      <header>
+        <h1>🐾 Volunteer Calculator</h1>
+        <p class="subtitle">Calculate pet food packing volunteer effort</p>
 
-        <main>
-            <!-- Calculator View -->
-            <div id="calculatorView">
-                <form id="volunteerForm" class="calculator-form">
-                    <section class="form-section">
-                        <h2>Volunteer Information</h2>
-                        
-                        <div class="form-group">
-                            <label for="duration">Time Volunteered:</label>
-                            <div class="duration-input">
-                                <input type="number" id="duration" name="duration" min="0" step="0.01" required>
-                                <select id="timeUnit" name="timeUnit">
-                                    <option value="hours">Hours</option>
-                                    <option value="minutes">Minutes</option>
-                                </select>
-                            </div>
-                        </div>
-                    </section>
+        <nav class="view-nav">
+          <button id="navCalculator" class="nav-btn active">Calculator</button>
+          <button id="navDataViewer" class="nav-btn">Data Viewer</button>
+        </nav>
+      </header>
 
-                    <section class="form-section">
-                        <h2>Volunteer Groups</h2>
-                        <div id="groupsList">
-                            <div class="group-entry" data-group-index="0">
-                                <div class="group-fields">
-                                    <div class="form-group">
-                                        <label for="groupName0">Name of Volunteer Group:</label>
-                                        <input type="text" class="group-name" id="groupName0" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="numVolunteers0">Number of Volunteers:</label>
-                                        <input type="number" class="num-volunteers" id="numVolunteers0" min="1" required>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" id="addGroupBtn" class="btn-secondary">+ Add Another Volunteer Group</button>
-                    </section>
+      <main>
+        <!-- Calculator View -->
+        <div id="calculatorView">
+          <form id="volunteerForm" class="calculator-form">
+            <section class="form-section">
+              <h2>Volunteer Information</h2>
 
-                    <section class="form-section">
-                        <h2>Bags Processed</h2>
-                        <div id="bagsList">
-                            <div class="bag-entry" data-bag-index="0">
-                                <div class="bag-fields">
-                                    <div class="form-group">
-                                        <label for="bagCount0">Number of Bags:</label>
-                                        <input type="number" class="bag-count" id="bagCount0" min="1" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="bagWeight0">Pounds per Bag:</label>
-                                        <input type="number" class="bag-weight" id="bagWeight0" min="0.01" step="0.01" required>
-                                    </div>
-                                    <div class="form-group bag-type-group">
-                                        <label>Bag Type:</label>
-                                        <div class="radio-group">
-                                            <label class="radio-label">
-                                                <input type="radio" name="bagType0" value="Dog" class="bag-type-radio" checked>
-                                                <span>Dog</span>
-                                            </label>
-                                            <label class="radio-label">
-                                                <input type="radio" name="bagType0" value="Cat" class="bag-type-radio">
-                                                <span>Cat</span>
-                                            </label>
-                                            <label class="radio-label">
-                                                <input type="radio" name="bagType0" value="Other" class="bag-type-radio">
-                                                <span>Other</span>
-                                            </label>
-                                        </div>
-                                        <input type="text" class="bag-type-other" id="bagTypeOther0" placeholder="Specify type (e.g., Bird)" style="display: none;">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" id="addBagBtn" class="btn-secondary">+ Add Another Bag Type</button>
-                    </section>
+              <div class="form-group">
+                <label for="duration">Time Volunteered:</label>
+                <div class="duration-input">
+                  <input
+                    type="number"
+                    id="duration"
+                    name="duration"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                  <select id="timeUnit" name="timeUnit">
+                    <option value="hours">Hours</option>
+                    <option value="minutes">Minutes</option>
+                  </select>
+                </div>
+              </div>
+            </section>
 
-                    <div class="form-actions">
-                        <button type="submit" id="calculateBtn" class="btn-primary">Calculate</button>
-                        <button type="button" id="resetBtn" class="btn-secondary">Reset</button>
+            <section class="form-section">
+              <h2>Volunteer Groups</h2>
+              <div id="groupsList">
+                <div class="group-entry" data-group-index="0">
+                  <div class="group-fields">
+                    <div class="form-group">
+                      <label for="groupName0">Name of Volunteer Group:</label>
+                      <input
+                        type="text"
+                        class="group-name"
+                        id="groupName0"
+                        required
+                      />
                     </div>
-                </form>
-
-                <section id="resultsSection" class="results-section" style="display: none;">
-                    <h2>Results</h2>
-                    <div id="resultsContent"></div>
-                    <div class="results-actions">
-                        <button type="button" id="copyBtn" class="btn-primary">📋 Copy Results as Markdown Table</button>
-                        <button type="button" id="copyEntriesBtn" class="btn-primary">📋 Copy Entries to Spreadsheet</button>
+                    <div class="form-group">
+                      <label for="numVolunteers0">Number of Volunteers:</label>
+                      <input
+                        type="number"
+                        class="num-volunteers"
+                        id="numVolunteers0"
+                        min="1"
+                        required
+                      />
                     </div>
-                    <div id="copyFeedback" class="copy-feedback" style="display: none;">Copied to clipboard!</div>
-                </section>
+                  </div>
+                </div>
+              </div>
+              <button type="button" id="addGroupBtn" class="btn-secondary">
+                + Add Another Volunteer Group
+              </button>
+            </section>
+
+            <section class="form-section">
+              <h2>Bags Processed</h2>
+              <div id="bagsList">
+                <div class="bag-entry" data-bag-index="0">
+                  <div class="bag-fields">
+                    <div class="form-group">
+                      <label for="bagCount0">Number of Bags:</label>
+                      <input
+                        type="number"
+                        class="bag-count"
+                        id="bagCount0"
+                        min="1"
+                        required
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label for="bagWeight0">Pounds per Bag:</label>
+                      <input
+                        type="number"
+                        class="bag-weight"
+                        id="bagWeight0"
+                        min="0.01"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                    <div class="form-group bag-type-group">
+                      <label>Bag Type:</label>
+                      <div class="radio-group">
+                        <label class="radio-label">
+                          <input
+                            type="radio"
+                            name="bagType0"
+                            value="Dog"
+                            class="bag-type-radio"
+                            checked
+                          />
+                          <span>Dog</span>
+                        </label>
+                        <label class="radio-label">
+                          <input
+                            type="radio"
+                            name="bagType0"
+                            value="Cat"
+                            class="bag-type-radio"
+                          />
+                          <span>Cat</span>
+                        </label>
+                        <label class="radio-label">
+                          <input
+                            type="radio"
+                            name="bagType0"
+                            value="Other"
+                            class="bag-type-radio"
+                          />
+                          <span>Other</span>
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        class="bag-type-other"
+                        id="bagTypeOther0"
+                        placeholder="Specify type (e.g., Bird)"
+                        style="display: none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button type="button" id="addBagBtn" class="btn-secondary">
+                + Add Another Bag Type
+              </button>
+            </section>
+
+            <div class="form-actions">
+              <button type="submit" id="calculateBtn" class="btn-primary">
+                Calculate
+              </button>
+              <button type="button" id="resetBtn" class="btn-secondary">
+                Reset
+              </button>
+            </div>
+          </form>
+
+          <section
+            id="resultsSection"
+            class="results-section"
+            style="display: none"
+          >
+            <h2>Results</h2>
+            <div id="resultsContent"></div>
+            <div class="results-actions">
+              <button type="button" id="copyBtn" class="btn-primary">
+                📋 Copy Results as Markdown Table
+              </button>
+              <button type="button" id="copyEntriesBtn" class="btn-primary">
+                📋 Copy Entries to Spreadsheet
+              </button>
+            </div>
+            <div id="copyFeedback" class="copy-feedback" style="display: none">
+              Copied to clipboard!
+            </div>
+          </section>
+        </div>
+
+        <!-- Data Viewer View -->
+        <div id="dataViewerView" style="display: none">
+          <section class="data-viewer-section">
+            <h2>📊 Data Viewer</h2>
+            <p class="viewer-description">
+              View and manage saved volunteer group entries
+            </p>
+
+            <div class="viewer-controls">
+              <div class="form-group">
+                <label for="groupSelect">Select Volunteer Group:</label>
+                <div class="select-with-refresh">
+                  <select id="groupSelect" class="group-select">
+                    <option value="">-- Select a volunteer group --</option>
+                  </select>
+                  <button
+                    id="refreshGroupsBtn"
+                    class="btn-refresh"
+                    title="Refresh group list"
+                  >
+                    🔄
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="dateFilterType">Filter by Date:</label>
+                <select id="dateFilterType" class="date-filter-select">
+                  <option value="all">All Time</option>
+                  <option value="calendar-year">Calendar Year</option>
+                  <option value="last-12-months">Last 12 Months</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+              </div>
+
+              <div
+                id="customDateRange"
+                class="custom-date-range"
+                style="display: none"
+              >
+                <div class="form-group">
+                  <label for="startDate">Start Date:</label>
+                  <div class="date-input-with-today">
+                    <input type="date" id="startDate" class="date-input" />
+                    <button
+                      type="button"
+                      class="btn-today"
+                      onclick="setToday('startDate')"
+                      title="Set to today"
+                    >
+                      📅 Today
+                    </button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="endDate">End Date:</label>
+                  <div class="date-input-with-today">
+                    <input type="date" id="endDate" class="date-input" />
+                    <button
+                      type="button"
+                      class="btn-today"
+                      onclick="setToday('endDate')"
+                      title="Set to today"
+                    >
+                      📅 Today
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <!-- Data Viewer View -->
-            <div id="dataViewerView" style="display: none;">
-                <section class="data-viewer-section">
-                    <h2>📊 Data Viewer</h2>
-                    <p class="viewer-description">View and manage saved volunteer group entries</p>
-                    
-                    <div class="viewer-controls">
-                        <div class="form-group">
-                            <label for="groupSelect">Select Volunteer Group:</label>
-                            <div class="select-with-refresh">
-                                <select id="groupSelect" class="group-select">
-                                    <option value="">-- Select a volunteer group --</option>
-                                </select>
-                                <button id="refreshGroupsBtn" class="btn-refresh" title="Refresh group list">🔄</button>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="dateFilterType">Filter by Date:</label>
-                            <select id="dateFilterType" class="date-filter-select">
-                                <option value="all">All Time</option>
-                                <option value="calendar-year">Calendar Year</option>
-                                <option value="last-12-months">Last 12 Months</option>
-                                <option value="custom">Custom Range</option>
-                            </select>
-                        </div>
-                        
-                        <div id="customDateRange" class="custom-date-range" style="display: none;">
-                            <div class="form-group">
-                                <label for="startDate">Start Date:</label>
-                                <div class="date-input-with-today">
-                                    <input type="date" id="startDate" class="date-input">
-                                    <button type="button" class="btn-today" onclick="setToday('startDate')" title="Set to today">📅 Today</button>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="endDate">End Date:</label>
-                                <div class="date-input-with-today">
-                                    <input type="date" id="endDate" class="date-input">
-                                    <button type="button" class="btn-today" onclick="setToday('endDate')" title="Set to today">📅 Today</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="viewerFeedback" class="viewer-feedback" style="display: none;"></div>
-                    
-                    <div id="groupSummary" class="group-summary" style="display: none;"></div>
-                    
-                    <div class="data-table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Date & Time</th>
-                                    <th>Volunteers</th>
-                                    <th>Hours</th>
-                                    <th>Bag Types</th>
-                                    <th>Total Pounds</th>
-                                    <th>Pounds/Volunteer</th>
-                                    <th>Pounds/Vol/Hour</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dataTableBody">
-                                <tr>
-                                    <td colspan="9" class="no-data">Select a volunteer group to view entries</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div id="dataViewerActions" class="viewer-actions" style="display: none;">
-                        <button type="button" onclick="copyAllEntriesToClipboard()" class="btn-primary">📋 Copy All Entries to Spreadsheet</button>
-                        <button type="button" onclick="downloadGroupEntriesAsCSV()" class="btn-primary">💾 Download Entries as CSV File</button>
-                    </div>
-                    
-                    <div class="data-management-actions">
-                        <h3 onclick="toggleDataManagement()" class="collapsible-header">
-                            <span id="dataManagementToggle" class="toggle-icon">▶</span> Data Management
-                        </h3>
-                        <div id="dataManagementContent" class="management-content" style="display: none;">
-                            <div class="management-section">
-                                <h4>Export Data</h4>
-                                <button type="button" onclick="exportAllDataToCSV()" class="btn-export">📥 Export All Data to CSV</button>
-                                <p class="section-note">Download all stored volunteer data as a CSV file</p>
-                            </div>
-                            
-                            <div class="management-section">
-                                <h4>Import Data</h4>
-                                <div class="import-buttons">
-                                    <button type="button" onclick="handleImportAddMode()" class="btn-import-add">
-                                        <span class="btn-icon">➕</span>
-                                        <span class="btn-text">
-                                            <strong>Add to Existing</strong>
-                                            <small>Merge with current data</small>
-                                        </span>
-                                    </button>
-                                    <button type="button" onclick="handleImportReplaceMode()" class="btn-import-replace">
-                                        <span class="btn-icon">🔄</span>
-                                        <span class="btn-text">
-                                            <strong>Replace All</strong>
-                                            <small>Delete & replace all data</small>
-                                        </span>
-                                    </button>
-                                </div>
-                                <p class="section-note">
-                                    <strong>Add to Existing:</strong> Imports CSV data and merges with your current entries (duplicates skipped)<br>
-                                    <strong>Replace All:</strong> ⚠️ Permanently deletes all current data and replaces it with the CSV file
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
+            <div
+              id="viewerFeedback"
+              class="viewer-feedback"
+              style="display: none"
+            ></div>
 
-        <footer>
-            <p><a href="https://github.com/AvinZarlez/volunteer-calculator">View on GitHub</a> | 
-               <a href="https://github.com/AvinZarlez/volunteer-calculator/tree/main/docs">Technical Documentation</a></p>
-        </footer>
+            <div
+              id="groupSummary"
+              class="group-summary"
+              style="display: none"
+            ></div>
+
+            <div class="data-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Date & Time</th>
+                    <th>Volunteers</th>
+                    <th>Hours</th>
+                    <th>Bag Types</th>
+                    <th>Total Pounds</th>
+                    <th>Pounds/Volunteer</th>
+                    <th>Pounds/Vol/Hour</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                  <tr>
+                    <td colspan="9" class="no-data">
+                      Select a volunteer group to view entries
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              id="dataViewerActions"
+              class="viewer-actions"
+              style="display: none"
+            >
+              <button
+                type="button"
+                onclick="copyAllEntriesToClipboard()"
+                class="btn-primary"
+              >
+                📋 Copy Entries to Spreadsheet
+              </button>
+              <button
+                type="button"
+                onclick="downloadGroupEntriesAsCSV()"
+                class="btn-primary"
+              >
+                💾 Download Entries as CSV File
+              </button>
+            </div>
+
+            <div class="data-management-actions">
+              <h3 onclick="toggleDataManagement()" class="collapsible-header">
+                <span id="dataManagementToggle" class="toggle-icon">▶</span>
+                Data Management
+              </h3>
+              <div
+                id="dataManagementContent"
+                class="management-content"
+                style="display: none"
+              >
+                <div class="management-section">
+                  <h4>Export Data</h4>
+                  <button
+                    type="button"
+                    onclick="exportAllDataToCSV()"
+                    class="btn-export"
+                  >
+                    📥 Export All Data to CSV
+                  </button>
+                  <p class="section-note">
+                    Download all stored volunteer data as a CSV file
+                  </p>
+                </div>
+
+                <div class="management-section">
+                  <h4>Import Data</h4>
+                  <div class="import-buttons">
+                    <button
+                      type="button"
+                      onclick="handleImportAddMode()"
+                      class="btn-import-add"
+                    >
+                      <span class="btn-icon">➕</span>
+                      <span class="btn-text">
+                        <strong>Add to Existing</strong>
+                        <small>Merge with current data</small>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onclick="handleImportReplaceMode()"
+                      class="btn-import-replace"
+                    >
+                      <span class="btn-icon">🔄</span>
+                      <span class="btn-text">
+                        <strong>Replace All</strong>
+                        <small>Delete & replace all data</small>
+                      </span>
+                    </button>
+                  </div>
+                  <p class="section-note">
+                    <strong>Add to Existing:</strong> Imports CSV data and
+                    merges with your current entries (duplicates skipped)<br />
+                    <strong>Replace All:</strong> ⚠️ Permanently deletes all
+                    current data and replaces it with the CSV file
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer>
+        <p>
+          <a href="https://github.com/AvinZarlez/volunteer-calculator"
+            >View on GitHub</a
+          >
+          |
+          <a
+            href="https://github.com/AvinZarlez/volunteer-calculator/tree/main/docs"
+            >Technical Documentation</a
+          >
+        </p>
+      </footer>
     </div>
 
     <script src="calculator.js"></script>
-</body>
+  </body>
 </html>
